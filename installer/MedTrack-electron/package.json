@@ -1,0 +1,84 @@
+{
+  "name": "medtrack",
+  "version": "1.0.0",
+  "description": "MedTrack Pharmacy Suite",
+  "main": "main.js",
+  "author": "MedTrack Technologies",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win --x64",
+    "build:all": "electron-builder -mwl"
+  },
+  "dependencies": {
+    "electron-updater": "^6.1.7"
+  },
+  "devDependencies": {
+    "electron": "^29.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "in.medtrack.pharmacy",
+    "productName": "MedTrack",
+    "copyright": "Copyright © 2026 MedTrack Technologies",
+
+    "directories": {
+      "output": "../../dist-installer"
+    },
+
+    "files": [
+      "main.js",
+      "icon.ico",
+      "node_modules/**/*",
+      "!node_modules/.cache"
+    ],
+
+    "extraResources": [
+      {
+        "from": "../../backend",
+        "to": "backend",
+        "filter": [
+          "src/**/*",
+          "package.json",
+          "node_modules/**/*",
+          "!node_modules/.cache",
+          ".env"
+        ]
+      },
+      {
+        "from": "../../frontend/build",
+        "to": "frontend-build"
+      }
+    ],
+
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "icon.ico",
+      "publisherName": "MedTrack Technologies",
+      "verifyUpdateCodeSignature": false
+    },
+
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "MedTrack",
+      "uninstallDisplayName": "MedTrack Pharmacy Suite",
+      "deleteAppDataOnUninstall": false,
+      "installerHeaderIcon": "icon.ico",
+      "installerSidebar": "installer-sidebar.bmp",
+      "license": "../../LICENSE.txt",
+      "include": "installer-custom.nsh"
+    },
+
+    "publish": null
+  }
+}

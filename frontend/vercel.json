@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ],
+  "env": {
+    "REACT_APP_API_URL": "https://medtrack-api.onrender.com/api"
+  }
+}

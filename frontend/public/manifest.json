@@ -1,0 +1,62 @@
+{
+  "short_name": "MedTrack",
+  "name": "MedTrack - Pharmacy Suite",
+  "description": "Smart pharmacy management for Indian medical stores",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "64x64",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "logo192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#2563eb",
+  "background_color": "#ffffff",
+  "categories": [
+    "business",
+    "medical",
+    "productivity"
+  ],
+  "lang": "en-IN",
+  "scope": "/",
+  "shortcuts": [
+    {
+      "name": "Add Customer",
+      "short_name": "Add",
+      "description": "Add a new customer",
+      "url": "/customers?action=add",
+      "icons": [
+        {
+          "src": "logo192.svg",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Reminders",
+      "short_name": "Reminders",
+      "description": "View refill reminders",
+      "url": "/reminders",
+      "icons": [
+        {
+          "src": "logo192.svg",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}

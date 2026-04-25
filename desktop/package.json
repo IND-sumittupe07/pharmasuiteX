@@ -1,0 +1,69 @@
+{
+  "name": "medtrack-desktop",
+  "version": "1.0.0",
+  "description": "MedTrack Pharmacy Suite — Desktop App",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux"
+  },
+  "dependencies": {
+    "electron-updater": "^6.1.7"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "in.medtrack.pharmacy",
+    "productName": "MedTrack",
+    "copyright": "Copyright © 2026 MedTrack",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "icon.png",
+      "node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../backend",
+        "to": "backend",
+        "filter": ["**/*", "!node_modules/.cache"]
+      },
+      {
+        "from": "../frontend/build",
+        "to": "frontend-build",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ],
+      "icon": "icon.png",
+      "publisherName": "MedTrack"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "MedTrack",
+      "installerHeaderImage": "icon.png",
+      "license": "LICENSE.txt",
+      "deleteAppDataOnUninstall": false
+    },
+    "mac": {
+      "category": "public.app-category.medical",
+      "icon": "icon.png"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "MedicalSoftware"
+    }
+  }
+}

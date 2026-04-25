@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="theme-color" content="#2563eb" />
+    <meta name="description" content="MedTrack - Smart Pharmacy Management Suite for Indian Medical Stores. Manage customers, medicines, reminders and campaigns." />
+    <meta name="keywords" content="pharmacy management, medical store software, medicine tracking, refill reminders, India" />
+    <meta name="author" content="MedTrack" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.svg" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="MedTrack - Pharmacy Suite" />
+    <meta property="og:description" content="Smart pharmacy management for Indian medical stores" />
+    <meta property="og:type" content="website" />
+
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <title>MedTrack 💊</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run MedTrack.</noscript>
+    <div id="root"></div>
+
+    <!-- Register Service Worker for PWA -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then(function(reg) {
+              console.log('✅ MedTrack PWA ready');
+            })
+            .catch(function(err) {
+              console.log('SW registration failed:', err);
+            });
+        });
+      }
+    </script>
+  </body>
+</html>
