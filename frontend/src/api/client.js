@@ -1,8 +1,10 @@
 import axios from "axios";
 
+const API_URL = process.env.REACT_APP_API_URL || "https://pharmasuitex.onrender.com/api";
+
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "/api",
-  timeout: 10000,
+  baseURL: API_URL,
+  timeout: 15000,
 });
 
 // Attach JWT token to every request
