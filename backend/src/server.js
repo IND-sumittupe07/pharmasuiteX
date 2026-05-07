@@ -29,9 +29,14 @@ app.use(helmet({
 }));
 
 // ─── CORS ─────────────────────────────────────────────────────
+// For Node.js/Express
+const cors = require('cors');
+
 app.use(cors({
-  origin: true,
+  origin: 'https://pharmasuite-five.vercel.app',
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json({ limit: "10mb" }));
