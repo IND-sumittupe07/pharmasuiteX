@@ -1,0 +1,13 @@
+{
+  "name": "medtrack",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm start\"",
+    "setup": "cd backend && npm install && npm run migrate && npm run seed",
+    "install:all": "cd backend && npm install && cd ../frontend && npm install --legacy-peer-deps"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
