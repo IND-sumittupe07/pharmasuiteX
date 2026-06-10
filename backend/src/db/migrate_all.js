@@ -21,7 +21,7 @@ const migrate = async () => {
         state VARCHAR(100),
         gst_number VARCHAR(20),
         license_number VARCHAR(50),
-        plan VARCHAR(20) DEFAULT 'basic' CHECK (plan IN ('free','basic','premium','enterprise')),
+        plan VARCHAR(20) DEFAULT 'basic' CHECK (plan IN ('free','basic','premium','enterprise','trial')),
         plan_expires_at TIMESTAMPTZ,
         fast2sms_key TEXT,
         interakt_key TEXT,
