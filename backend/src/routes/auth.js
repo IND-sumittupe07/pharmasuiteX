@@ -16,11 +16,11 @@ router.post("/register", async (req, res) => {
     return res.status(400).json({ error: "Password must be at least 8 characters" });
 
   const planId = selectedPlan && PLANS[selectedPlan] ? selectedPlan : "trial";
-  const plan   = PLANS[planId] || PLANS["trial"];
+  const planId = selectedPlan && PLANS[selectedPlan] ? selectedPlan : "free";
 
   // Set expiry: trial = 15 days, paid = 30 days from now
   const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + (planId === "trial" || planId === "free" ? 15 : 30));
+  expiresAt.setDate(expiresAt.getDate() + (planId === "free" ? 15 : 30));
 
   try {
     const pharmaRes = await query(
