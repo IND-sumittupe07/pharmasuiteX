@@ -276,7 +276,7 @@ export default function SettingsPage() {
             <div className="card" style={{ padding:24, background:"#f0fdf4", border:"1px solid #bbf7d0" }}>
               <div style={{ fontSize:16, fontWeight:800, color:"#1e293b", marginBottom:12 }}>🤝 Support</div>
               <div style={{ fontSize:13, color:"#374151", lineHeight:1.8 }}>
-                📧 <strong>support@pharmasuitex.in</strong><br/>
+                📧 <strong>pharmasuitex@gmail.com</strong><br/>
                 📱 WhatsApp: <strong>+91 9529052510</strong><br/>
                 🕐 Mon–Sat, 9AM–6PM IST
               </div>
