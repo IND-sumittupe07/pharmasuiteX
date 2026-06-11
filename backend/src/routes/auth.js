@@ -5,11 +5,22 @@ const jwt = require("jsonwebtoken");
 const { query } = require("../db/db");
 const PLANS = require("../config/plans");
 
+// Middleware: Verify JWT
+const authenticate = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ error: "No token provided" });
+  try {
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    next();
+  } catch (err) {
+    res.status(401).json({ error: "Invalid token" });
+  }
+};
+
 // Register endpoint
 router.post("/register", async (req, res) => {
   const { pharmacyName, ownerName, mobile, email, password, city, state, selectedPlan } = req.body;
   
-  // Validation
   if (!pharmacyName || !ownerName || !mobile || !password) {
     return res.status(400).json({ error: "pharmacyName, ownerName, mobile, password required" });
   }
@@ -17,16 +28,13 @@ router.post("/register", async (req, res) => {
     return res.status(400).json({ error: "Password must be at least 8 characters" });
   }
 
-  // Determine plan (default to 'free' for trial)
   const planId = selectedPlan && PLANS[selectedPlan] ? selectedPlan : "free";
   const plan = PLANS[planId] || PLANS["free"];
 
-  // Set expiry: free = 15 days, paid = 30 days from now
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + (planId === "free" ? 15 : 30));
 
   try {
-    // Insert pharmacy
     const pharmaRes = await query(
       `INSERT INTO pharmacies (name, owner_name, mobile, email, city, state, plan, plan_expires_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
@@ -34,7 +42,6 @@ router.post("/register", async (req, res) => {
     );
     const pharmacyId = pharmaRes.rows[0].id;
 
-    // Hash password and insert user
     const hash = await bcrypt.hash(password, 12);
     const userRes = await query(
       `INSERT INTO users (pharmacy_id, name, mobile, email, password_hash, role)
@@ -43,14 +50,12 @@ router.post("/register", async (req, res) => {
     );
     const user = userRes.rows[0];
 
-    // Generate JWT token
     const token = jwt.sign(
       { userId: user.id, pharmacyId, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
-    // Return success response
     res.status(201).json({
       token,
       user: { id: user.id, name: user.name, role: user.role, pharmacyId, plan: planId, pharmacyName },
@@ -115,6 +120,103 @@ router.post("/login", async (req, res) => {
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ error: "Login failed" });
+  }
+});
+
+// Get current user & pharmacy (for Settings page)
+router.get("/me", authenticate, async (req, res) => {
+  try {
+    const userRes = await query(
+      `SELECT u.id, u.name, u.mobile, u.email, u.role,
+              p.id as pharmacy_id, p.name as pharmacy_name, p.owner_name, p.city, p.state, p.address,
+              p.license_number, p.gst_number, p.plan, p.plan_expires_at
+       FROM users u
+       JOIN pharmacies p ON u.pharmacy_id = p.id
+       WHERE u.id = $1`,
+      [req.user.userId]
+    );
+
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const user = userRes.rows[0];
+    res.json({
+      id: user.id,
+      name: user.name,
+      mobile: user.mobile,
+      email: user.email,
+      role: user.role,
+      pharmacy_id: user.pharmacy_id,
+      pharmacy_name: user.pharmacy_name,
+      owner_name: user.owner_name,
+      city: user.city,
+      state: user.state,
+      address: user.address,
+      license_number: user.license_number,
+      gst_number: user.gst_number,
+      plan: user.plan,
+      plan_expires_at: user.plan_expires_at,
+    });
+  } catch (err) {
+    console.error("Get me error:", err);
+    res.status(500).json({ error: "Failed to fetch user data" });
+  }
+});
+
+// Update pharmacy info (for Settings page)
+router.put("/pharmacy", authenticate, async (req, res) => {
+  const { name, ownerName, city, state, address, licenseNumber, gstNumber } = req.body;
+
+  try {
+    await query(
+      `UPDATE pharmacies 
+       SET name = $1, owner_name = $2, city = $3, state = $4, address = $5, 
+           license_number = $6, gst_number = $7, updated_at = NOW()
+       WHERE id = $8`,
+      [name, ownerName, city, state, address, licenseNumber, gstNumber, req.user.pharmacyId]
+    );
+
+    res.json({ message: "Pharmacy updated successfully" });
+  } catch (err) {
+    console.error("Update pharmacy error:", err);
+    res.status(500).json({ error: "Failed to update pharmacy" });
+  }
+});
+
+// Change password (for Settings page)
+router.post("/change-password", authenticate, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword || newPassword.length < 8) {
+    return res.status(400).json({ error: "Invalid password format" });
+  }
+
+  try {
+    const userRes = await query(
+      `SELECT password_hash FROM users WHERE id = $1`,
+      [req.user.userId]
+    );
+
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const validPassword = await bcrypt.compare(currentPassword, userRes.rows[0].password_hash);
+    if (!validPassword) {
+      return res.status(401).json({ error: "Current password is incorrect" });
+    }
+
+    const hash = await bcrypt.hash(newPassword, 12);
+    await query(
+      `UPDATE users SET password_hash = $1 WHERE id = $2`,
+      [hash, req.user.userId]
+    );
+
+    res.json({ message: "Password changed successfully" });
+  } catch (err) {
+    console.error("Change password error:", err);
+    res.status(500).json({ error: "Failed to change password" });
   }
 });
 
