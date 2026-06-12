@@ -8,6 +8,7 @@ export default function LoginPage() {
   const [form, setForm] = useState({ mobile: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -45,8 +46,37 @@ export default function LoginPage() {
           </div>
           <div>
             <label style={{ fontSize: 12, fontWeight: 600, color: "#64748b", display: "block", marginBottom: 6 }}>Password</label>
-            <input className="input" type="password" placeholder="Your password" value={form.password}
-              onChange={e => setForm(f => ({ ...f, password: e.target.value }))} required />
+            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+              <input 
+                className="input" 
+                type={showPassword ? "text" : "password"} 
+                placeholder="Your password" 
+                value={form.password}
+                onChange={e => setForm(f => ({ ...f, password: e.target.value }))} 
+                required 
+                style={{ paddingRight: 45 }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: "absolute",
+                  right: 12,
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "#64748b",
+                  fontSize: 18,
+                  padding: "4px 8px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? "👁️" : "👁️‍🗨️"}
+              </button>
+            </div>
           </div>
           <button className="btn-primary" type="submit" disabled={loading} style={{ marginTop: 8, padding: "13px" }}>
             {loading ? "Signing in..." : "Sign In →"}
@@ -54,13 +84,7 @@ export default function LoginPage() {
         </form>
 
         <div style={{ textAlign: "center", marginTop: 24, fontSize: 13, color: "#64748b" }}>
-          New pharmacy? <Link to="/register" style={{ color: "#2563eb", fontWeight: 600 }}>Register here</Link>
-        </div>
-
-        <div style={{ textAlign: "center", marginTop: 12, fontSize: 11, color: "#94a3b8" }}>
-          <Link to="/terms" style={{ color: "#94a3b8" }}>Terms & Conditions</Link>
-          {" · "}
-          <Link to="/privacy" style={{ color: "#94a3b8" }}>Privacy Policy</Link>
+          Don't have an account? <Link to="/register" style={{ color: "#2563eb", textDecoration: "none", fontWeight: 600 }}>Register here</Link>
         </div>
       </div>
     </div>
