@@ -1,11 +1,13 @@
 const express = require("express");
 const { query } = require("../db/db");
 const { authenticate } = require("../middleware/auth");
+const { checkFeature } = require("../middleware/planLimits");
 
 const router = express.Router();
 router.use(authenticate);
 
-router.get("/dashboard", async (req, res) => {
+// Protect analytics endpoints with feature check
+router.get("/dashboard", checkFeature("analytics"), async (req, res) => {
   const { pharmacyId } = req.user;
   try {
     const [
@@ -75,7 +77,7 @@ router.get("/dashboard", async (req, res) => {
   }
 });
 
-router.get("/revenue", async (req, res) => {
+router.get("/revenue", checkFeature("analytics"), async (req, res) => {
   const { pharmacyId } = req.user;
   try {
     const result = await query(`
