@@ -17,6 +17,8 @@ const PLANS = {
       { label: "WhatsApp messages", included: false },
       { label: "CSV Export", included: false },
       { label: "Advanced analytics", included: false },
+      { label: "Auto refill reminders", included: false },
+      { label: "Multi-staff login", included: false },
     ],
   },
   basic: {
@@ -37,6 +39,7 @@ const PLANS = {
       { label: "CSV Export", included: true },
       { label: "WhatsApp messages", included: false },
       { label: "Advanced analytics", included: false },
+      { label: "Multi-staff login", included: false },
     ],
   },
   premium: {
