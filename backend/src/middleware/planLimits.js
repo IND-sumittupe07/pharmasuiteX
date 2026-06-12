@@ -28,7 +28,44 @@ const checkPlanExpiry = async (req, res, next) => {
   }
 };
 
-// ── Check usage limits ────────────────────────────────────────────────────────
+// ── Check feature access ──────────────────────────────────────────────────────
+const checkFeature = (feature) => async (req, res, next) => {
+  try {
+    const { pharmacyId } = req.user;
+    const result = await query(
+      "SELECT plan, plan_expires_at FROM pharmacies WHERE id=$1",
+      [pharmacyId]
+    );
+    const { plan, plan_expires_at } = result.rows[0];
+
+    // Check expiry first
+    if (plan_expires_at && new Date(plan_expires_at) < new Date()) {
+      return res.status(403).json({
+        error: "PLAN_EXPIRED",
+        message: "Your plan has expired. Please renew to continue.",
+      });
+    }
+
+    const planConfig = PLANS[plan] || PLANS.trial;
+    const hasFeature = planConfig.limits[feature];
+
+    if (!hasFeature) {
+      return res.status(403).json({
+        error: "FEATURE_NOT_AVAILABLE",
+        message: `${feature} is not available on your ${plan} plan.`,
+        current: plan,
+        requiredPlan: feature === "analytics" ? "premium" : feature === "multiStaff" ? "premium" : "basic",
+        upgradeRequired: true,
+      });
+    }
+
+    next();
+  } catch (err) {
+    next();
+  }
+};
+
+// ── Check usage limits ───────────────────────────────────────────────────────
 const checkLimit = (resource) => async (req, res, next) => {
   try {
     const { pharmacyId } = req.user;
@@ -113,14 +150,17 @@ const getUsage = async (req, res) => {
         analytics: planConfig.limits.analytics,
         autoReminders: planConfig.limits.autoReminders,
         multiStaff: planConfig.limits.multiStaff,
+        smsPerMonth: planConfig.limits.smsPerMonth,
+        whatsappPerMonth: planConfig.limits.whatsappPerMonth,
         gstInvoice: true,
         suppliers: true,
         expiryTracking: true,
       },
+      allFeatures: planConfig.features,
     });
   } catch (err) {
     res.status(500).json({ error: "Failed to get usage" });
   }
 };
 
-module.exports = { checkLimit, checkPlanExpiry, getUsage };
+module.exports = { checkLimit, checkPlanExpiry, checkFeature, getUsage };
