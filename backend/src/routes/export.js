@@ -1,6 +1,7 @@
 const express = require("express");
 const { query } = require("../db/db");
 const { authenticate } = require("../middleware/auth");
+const { checkFeature } = require("../middleware/planLimits");
 
 const router = express.Router();
 router.use(authenticate);
@@ -16,8 +17,8 @@ const sendCSV = (res, filename, csv) => {
   res.send(csv);
 };
 
-// GET /api/export/customers
-router.get("/customers", async (req, res) => {
+// All export endpoints require exports feature (Basic+ plan)
+router.get("/customers", checkFeature("exports"), async (req, res) => {
   const { pharmacyId } = req.user;
   try {
     const result = await query(`
@@ -44,8 +45,7 @@ router.get("/customers", async (req, res) => {
   }
 });
 
-// GET /api/export/medicines
-router.get("/medicines", async (req, res) => {
+router.get("/medicines", checkFeature("exports"), async (req, res) => {
   const { pharmacyId } = req.user;
   try {
     const result = await query(`
@@ -61,8 +61,7 @@ router.get("/medicines", async (req, res) => {
   }
 });
 
-// GET /api/export/refills
-router.get("/refills", async (req, res) => {
+router.get("/refills", checkFeature("exports"), async (req, res) => {
   const { pharmacyId } = req.user;
   try {
     const result = await query(`
@@ -91,8 +90,7 @@ router.get("/refills", async (req, res) => {
   }
 });
 
-// GET /api/export/campaigns
-router.get("/campaigns", async (req, res) => {
+router.get("/campaigns", checkFeature("exports"), async (req, res) => {
   const { pharmacyId } = req.user;
   try {
     const result = await query("SELECT * FROM campaigns WHERE pharmacy_id=$1 ORDER BY created_at DESC", [pharmacyId]);
@@ -104,8 +102,7 @@ router.get("/campaigns", async (req, res) => {
   }
 });
 
-// GET /api/export/purchases
-router.get("/purchases", async (req, res) => {
+router.get("/purchases", checkFeature("exports"), async (req, res) => {
   const { pharmacyId } = req.user;
   try {
     const result = await query(`

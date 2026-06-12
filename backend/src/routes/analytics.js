@@ -6,7 +6,7 @@ const { checkFeature } = require("../middleware/planLimits");
 const router = express.Router();
 router.use(authenticate);
 
-// Protect analytics endpoints with feature check
+// Protect analytics endpoints - only Premium plan
 router.get("/dashboard", checkFeature("analytics"), async (req, res) => {
   const { pharmacyId } = req.user;
   try {
