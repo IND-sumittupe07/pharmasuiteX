@@ -66,7 +66,7 @@ const checkFeature = (feature) => async (req, res, next) => {
 
       return res.status(403).json({
         error: "FEATURE_NOT_AVAILABLE",
-        message: `${featureNames[feature] || feature} is not available on your ${plan} plan.",
+        message: `${featureNames[feature] || feature} is not available on your ${plan} plan.`,
         current: plan,
         requiredPlan: requiredPlans[feature] || "premium",
         upgradeRequired: true,
@@ -113,7 +113,7 @@ const checkLimit = (resource) => async (req, res, next) => {
     if (count >= limit) {
       return res.status(403).json({
         error: "PLAN_LIMIT_REACHED",
-        message: `You've reached the ${resource} limit for your ${plan} plan.",
+        message: `You've reached the ${resource} limit for your ${plan} plan.`,
         current: count, limit, plan,
         upgradeRequired: true,
       });
