@@ -123,12 +123,13 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// Get current user & pharmacy (for Settings page)
+// Get current user & pharmacy (FIXED - returns pharmacy name and email correctly)
 router.get("/me", authenticate, async (req, res) => {
   try {
     const userRes = await query(
-      `SELECT u.id, u.name, u.mobile, u.email, u.role,
-              p.id as pharmacy_id, p.name as pharmacy_name, p.owner_name, p.city, p.state, p.address,
+      `SELECT u.id, u.name as user_name, u.mobile as user_mobile, u.email as user_email, u.role,
+              p.id as pharmacy_id, p.name as pharmacy_name, p.owner_name, p.mobile as pharmacy_mobile, 
+              p.email as pharmacy_email, p.city, p.state, p.address,
               p.license_number, p.gst_number, p.plan, p.plan_expires_at, p.fast2sms_key, p.interakt_key
        FROM users u
        JOIN pharmacies p ON u.pharmacy_id = p.id
@@ -143,9 +144,9 @@ router.get("/me", authenticate, async (req, res) => {
     const user = userRes.rows[0];
     res.json({
       id: user.id,
-      name: user.name,
-      mobile: user.mobile,
-      email: user.email,
+      name: user.owner_name,  // Owner name from pharmacy
+      mobile: user.pharmacy_mobile,  // Pharmacy mobile
+      email: user.pharmacy_email,  // Pharmacy email (NOT user email)
       role: user.role,
       pharmacy_id: user.pharmacy_id,
       pharmacy_name: user.pharmacy_name,
@@ -166,27 +167,27 @@ router.get("/me", authenticate, async (req, res) => {
   }
 });
 
-// Update pharmacy info (FIXED - includes all fields)
+// Update pharmacy info (FIXED - properly saves all fields)
 router.put("/pharmacy", authenticate, async (req, res) => {
   const { name, ownerName, mobile, email, city, state, address, licenseNumber, gstNumber, fast2smsKey, interaktKey } = req.body;
 
   try {
     const result = await query(
       `UPDATE pharmacies 
-       SET name = COALESCE($1, name),
-           owner_name = COALESCE($2, owner_name),
-           mobile = COALESCE($3, mobile),
-           email = COALESCE($4, email),
-           city = COALESCE($5, city),
-           state = COALESCE($6, state),
-           address = COALESCE($7, address),
-           license_number = COALESCE($8, license_number),
-           gst_number = COALESCE($9, gst_number),
-           fast2sms_key = COALESCE($10, fast2sms_key),
-           interakt_key = COALESCE($11, interakt_key),
+       SET name = COALESCE(NULLIF($1, ''), name),
+           owner_name = COALESCE(NULLIF($2, ''), owner_name),
+           mobile = COALESCE(NULLIF($3, ''), mobile),
+           email = COALESCE(NULLIF($4, ''), email),
+           city = COALESCE(NULLIF($5, ''), city),
+           state = COALESCE(NULLIF($6, ''), state),
+           address = COALESCE(NULLIF($7, ''), address),
+           license_number = COALESCE(NULLIF($8, ''), license_number),
+           gst_number = COALESCE(NULLIF($9, ''), gst_number),
+           fast2sms_key = COALESCE(NULLIF($10, ''), fast2sms_key),
+           interakt_key = COALESCE(NULLIF($11, ''), interakt_key),
            updated_at = NOW()
        WHERE id = $12
-       RETURNING id, name, owner_name, mobile, email, city, state, address, license_number, gst_number, fast2sms_key, interakt_key`,
+       RETURNING *`,
       [name, ownerName, mobile, email, city, state, address, licenseNumber, gstNumber, fast2smsKey, interaktKey, req.user.pharmacyId]
     );
 
@@ -196,6 +197,9 @@ router.put("/pharmacy", authenticate, async (req, res) => {
 
     res.json({ message: "Pharmacy updated successfully", data: result.rows[0] });
   } catch (err) {
+    if (err.code === "23505") {
+      return res.status(409).json({ error: "Mobile or email already in use" });
+    }
     console.error("Update pharmacy error:", err);
     res.status(500).json({ error: "Failed to update pharmacy" });
   }
