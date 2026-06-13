@@ -129,7 +129,7 @@ router.get("/me", authenticate, async (req, res) => {
     const userRes = await query(
       `SELECT u.id, u.name, u.mobile, u.email, u.role,
               p.id as pharmacy_id, p.name as pharmacy_name, p.owner_name, p.city, p.state, p.address,
-              p.license_number, p.gst_number, p.plan, p.plan_expires_at
+              p.license_number, p.gst_number, p.plan, p.plan_expires_at, p.fast2sms_key, p.interakt_key
        FROM users u
        JOIN pharmacies p ON u.pharmacy_id = p.id
        WHERE u.id = $1`,
@@ -157,6 +157,8 @@ router.get("/me", authenticate, async (req, res) => {
       gst_number: user.gst_number,
       plan: user.plan,
       plan_expires_at: user.plan_expires_at,
+      fast2sms_key: user.fast2sms_key || "",
+      interakt_key: user.interakt_key || "",
     });
   } catch (err) {
     console.error("Get me error:", err);
@@ -164,20 +166,35 @@ router.get("/me", authenticate, async (req, res) => {
   }
 });
 
-// Update pharmacy info (for Settings page)
+// Update pharmacy info (FIXED - includes all fields)
 router.put("/pharmacy", authenticate, async (req, res) => {
-  const { name, ownerName, city, state, address, licenseNumber, gstNumber } = req.body;
+  const { name, ownerName, mobile, email, city, state, address, licenseNumber, gstNumber, fast2smsKey, interaktKey } = req.body;
 
   try {
-    await query(
+    const result = await query(
       `UPDATE pharmacies 
-       SET name = $1, owner_name = $2, city = $3, state = $4, address = $5, 
-           license_number = $6, gst_number = $7, updated_at = NOW()
-       WHERE id = $8`,
-      [name, ownerName, city, state, address, licenseNumber, gstNumber, req.user.pharmacyId]
+       SET name = COALESCE($1, name),
+           owner_name = COALESCE($2, owner_name),
+           mobile = COALESCE($3, mobile),
+           email = COALESCE($4, email),
+           city = COALESCE($5, city),
+           state = COALESCE($6, state),
+           address = COALESCE($7, address),
+           license_number = COALESCE($8, license_number),
+           gst_number = COALESCE($9, gst_number),
+           fast2sms_key = COALESCE($10, fast2sms_key),
+           interakt_key = COALESCE($11, interakt_key),
+           updated_at = NOW()
+       WHERE id = $12
+       RETURNING id, name, owner_name, mobile, email, city, state, address, license_number, gst_number, fast2sms_key, interakt_key`,
+      [name, ownerName, mobile, email, city, state, address, licenseNumber, gstNumber, fast2smsKey, interaktKey, req.user.pharmacyId]
     );
 
-    res.json({ message: "Pharmacy updated successfully" });
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Pharmacy not found" });
+    }
+
+    res.json({ message: "Pharmacy updated successfully", data: result.rows[0] });
   } catch (err) {
     console.error("Update pharmacy error:", err);
     res.status(500).json({ error: "Failed to update pharmacy" });
