@@ -3,6 +3,8 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { UsageProvider } from "./context/UsageContext";
+import { ThemeProvider } from "./context/ThemeContext"; // Added Theme Context
+import DarkModeToggle from "./components/DarkModeToggle"; // Added Dark Mode Toggle Component
 import LoginPage       from "./pages/LoginPage";
 import RegisterPage    from "./pages/RegisterPage";
 import PlanSelectPage  from "./pages/PlanSelectPage";
@@ -74,17 +76,22 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login"       element={<PublicRoute><LoginPage /></PublicRoute>} />
-          <Route path="/register"    element={<PublicRoute><RegisterPage /></PublicRoute>} />
-          <Route path="/terms"       element={<TermsPage />} />
-          <Route path="/privacy"     element={<PrivacyPage />} />
-          <Route path="/select-plan" element={<PlanSelectPage />} />
-          <Route path="/*"           element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-          <Route path="*"            element={<NotFoundPage />} />
-        </Routes>
-      </BrowserRouter>
+      <ThemeProvider> {/* Wrapped inside AuthProvider to distribute dark mode state */}
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login"       element={<PublicRoute><LoginPage /></PublicRoute>} />
+            <Route path="/register"    element={<PublicRoute><RegisterPage /></PublicRoute>} />
+            <Route path="/terms"       element={<TermsPage />} />
+            <Route path="/privacy"     element={<PrivacyPage />} />
+            <Route path="/select-plan" element={<PlanSelectPage />} />
+            <Route path="/*"           element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+            <Route path="*"            element={<NotFoundPage />} />
+          </Routes>
+          
+          {/* Placed globally inside the router so it stays visible on screen */}
+          <DarkModeToggle /> 
+        </BrowserRouter>
+      </ThemeProvider>
     </AuthProvider>
   </React.StrictMode>
 );
