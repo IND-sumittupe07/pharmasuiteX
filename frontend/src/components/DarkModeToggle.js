@@ -1,7 +1,7 @@
 import { useTheme } from "../context/ThemeContext";
 
 export default function DarkModeToggle() {
-  const { isDark, toggleTheme } = useTheme();
+  const { isDarkmode, toggleTheme } = useTheme();
 
   return (
     <button
