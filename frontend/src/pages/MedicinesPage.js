@@ -184,7 +184,7 @@ export default function MedicinesPage() {
               <tr>
                 <th style={{color:"var(--txt4)", background:"var(--table-head)"}}>Medicine</th>
                 <th style={{color:"var(--txt4)", background:"var(--table-head)"}}>Category</th>
-                <th style={{color:"var(--txt4)", background(--table-head)"}}>Stock</th>
+                <th style={{color:"var(--txt4)", background:"var(--table-head)"}}>Stock</th>
                 <th style={{color:"var(--txt4)", background:"var(--table-head)"}}>Status</th>
                 <th style={{color:"var(--txt4)", background:"var(--table-head)"}}>Cost Price</th>
                 <th style={{color:"var(--txt4)", background:"var(--table-head)"}}>Sell Price</th>
