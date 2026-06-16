@@ -3,36 +3,27 @@ import { createContext, useContext, useEffect, useState } from "react";
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-  const [isDark, setIsDark] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem("pharma-theme");
+    if (saved) return saved === "dark";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
 
   useEffect(() => {
-    const saved = localStorage.getItem("pharma-theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const shouldBeDark = saved ? saved === "dark" : prefersDark;
-    setIsDark(shouldBeDark);
-    applyTheme(shouldBeDark);
-  }, []);
-
-  const applyTheme = (dark) => {
-    const html = document.documentElement;
-    html.classList.add("no-transition");
-    if (dark) {
-      html.classList.add("dark");
+    const root = document.documentElement;
+    if (isDarkMode) {
+      root.setAttribute("data-theme", "dark");
+      localStorage.setItem("pharma-theme", "dark");
     } else {
-      html.classList.remove("dark");
+      root.removeAttribute("data-theme");
+      localStorage.setItem("pharma-theme", "light");
     }
-    localStorage.setItem("pharma-theme", dark ? "dark" : "light");
-    setTimeout(() => html.classList.remove("no-transition"), 50);
-  };
+  }, [isDarkMode]);
 
-  const toggleTheme = () => {
-    const newVal = !isDark;
-    setIsDark(newVal);
-    applyTheme(newVal);
-  };
+  const toggleTheme = () => setIsDarkMode(prev => !prev);
 
   return (
-    <ThemeContext.Provider value={{ isDark, toggleTheme }}>
+    <ThemeContext.Provider value={{ isDarkMode, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );
