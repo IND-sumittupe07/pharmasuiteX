@@ -29,45 +29,52 @@
   --table-hover: #f8faff;
   --scrollbar: #cbd5e1;
   --tag-bg: #f1f5f9;
+  --tag-txt: #475569;
+  --sidebar-txt: #475569;
+  --sidebar-icon: #64748b;
+  --header-txt: #1e293b;
 }
 
 [data-theme="dark"] {
   --bg1: #0f172a;
   --bg2: #1e293b;
-  --bg3: #283548;
+  --bg3: #253347;
   --bg4: #334155;
-  --txt1: #f1f5f9;
-  --txt2: #cbd5e1;
-  --txt3: #94a3b8;
-  --txt4: #64748b;
+  --txt1: #f1f5f9;        /* Bright white text */
+  --txt2: #e2e8f0;        /* Very light gray */
+  --txt3: #cbd5e1;        /* Light gray */
+  --txt4: #94a3b8;        /* Medium gray */
   --border: #334155;
   --border2: #2a3a4e;
-  --primary: #3b82f6;
-  --primary2: #2563eb;
+  --primary: #60a5fa;     /* Brighter blue for dark mode */
+  --primary2: #3b82f6;
   --input-bg: #162032;
   --shadow: 0 1px 3px rgba(0,0,0,0.5), 0 4px 16px rgba(0,0,0,0.3);
   --shadow2: 0 2px 8px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.4);
-  --btn2-bg: #283548;
-  --btn2-txt: #cbd5e1;
-  --nav-hover: rgba(59,130,246,0.15);
-  --table-head: #1a2740;
+  --btn2-bg: #253347;
+  --btn2-txt: #e2e8f0;    /* Bright text on secondary buttons */
+  --nav-hover: rgba(96,165,250,0.15);
+  --table-head: #162032;
   --table-hover: #1e3050;
   --scrollbar: #334155;
-  --tag-bg: #283548;
+  --tag-bg: #253347;
+  --tag-txt: #e2e8f0;     /* Bright tag text */
+  --sidebar-txt: #e2e8f0; /* BRIGHT sidebar text */
+  --sidebar-icon: #cbd5e1;/* Bright icons */
+  --header-txt: #f1f5f9;  /* Bright header text */
 }
 
 /* =====================================================
    NUCLEAR OVERRIDE — Forces EVERY element dark
 ===================================================== */
 
-/* Body & Root */
 [data-theme="dark"],
 [data-theme="dark"] body {
   background: var(--bg1) !important;
   color: var(--txt1) !important;
 }
 
-/* ALL divs, sections, articles, headers, mains, asides, navs */
+/* ALL containers inherit */
 [data-theme="dark"] div,
 [data-theme="dark"] section,
 [data-theme="dark"] article,
@@ -80,27 +87,41 @@
   color: inherit;
 }
 
-/* ===== SIDEBAR ===== */
-/* The sidebar container — usually the left panel */
+/* ===== SIDEBAR - BRIGHT TEXT ===== */
 [data-theme="dark"] div[style*="width:240"],
 [data-theme="dark"] div[style*="width: 240"],
 [data-theme="dark"] div[style*="width:220"],
 [data-theme="dark"] div[style*="width: 220"],
 [data-theme="dark"] div[style*="width:200"],
 [data-theme="dark"] div[style*="width: 200"] {
-  background: var(--bg2) !important;
+  background: #1a2540 !important;
   border-color: var(--border) !important;
+  color: var(--txt1) !important;
+}
+
+/* Sidebar ALL text must be bright */
+[data-theme="dark"] div[style*="width:240"] *,
+[data-theme="dark"] div[style*="width: 240"] *,
+[data-theme="dark"] div[style*="width:220"] *,
+[data-theme="dark"] div[style*="width: 220"] *,
+[data-theme="dark"] div[style*="width:200"] *,
+[data-theme="dark"] div[style*="width: 200"] * {
+  color: var(--sidebar-txt) !important;
+}
+
+/* Keep active nav item white text */
+[data-theme="dark"] .nav-item.active,
+[data-theme="dark"] .nav-item.active * {
+  color: white !important;
 }
 
 /* ===== MAIN CONTENT AREA ===== */
 [data-theme="dark"] div[style*="flex:1"],
-[data-theme="dark"] div[style*="flex: 1"],
-[data-theme="dark"] div[style*="minHeight"],
-[data-theme="dark"] div[style*="min-height"] {
+[data-theme="dark"] div[style*="flex: 1"] {
   background: var(--bg1) !important;
 }
 
-/* ===== ALL WHITE BACKGROUNDS ===== */
+/* ===== WHITE BACKGROUNDS → DARK ===== */
 [data-theme="dark"] *[style*="background: white"],
 [data-theme="dark"] *[style*="background:white"],
 [data-theme="dark"] *[style*="background: #ffffff"],
@@ -111,50 +132,50 @@
 [data-theme="dark"] *[style*="backgroundColor: #ffffff"],
 [data-theme="dark"] *[style*="backgroundColor: #fff"] {
   background: var(--bg2) !important;
+  color: var(--txt1) !important;
 }
 
-/* ===== f8fafc backgrounds ===== */
 [data-theme="dark"] *[style*="background: #f8fafc"],
 [data-theme="dark"] *[style*="background:#f8fafc"],
 [data-theme="dark"] *[style*="backgroundColor: #f8fafc"] {
   background: var(--bg1) !important;
 }
 
-/* ===== f1f5f9 backgrounds ===== */
 [data-theme="dark"] *[style*="background: #f1f5f9"],
 [data-theme="dark"] *[style*="background:#f1f5f9"],
 [data-theme="dark"] *[style*="backgroundColor: #f1f5f9"] {
   background: var(--bg3) !important;
+  color: var(--txt1) !important;
 }
 
-/* ===== e2e8f0 backgrounds ===== */
 [data-theme="dark"] *[style*="background: #e2e8f0"],
 [data-theme="dark"] *[style*="background:#e2e8f0"] {
   background: var(--bg4) !important;
+  color: var(--txt1) !important;
 }
 
-/* ===== ALL DARK TEXT ===== */
+/* ===== TEXT COLORS - ALL BRIGHT ===== */
 [data-theme="dark"] *[style*="color: #1e293b"],
 [data-theme="dark"] *[style*="color:#1e293b"] {
-  color: var(--txt1) !important;
+  color: var(--txt1) !important;   /* #f1f5f9 bright white */
 }
 
 [data-theme="dark"] *[style*="color: #475569"],
 [data-theme="dark"] *[style*="color:#475569"] {
-  color: var(--txt2) !important;
+  color: var(--txt2) !important;   /* #e2e8f0 very light */
 }
 
 [data-theme="dark"] *[style*="color: #64748b"],
 [data-theme="dark"] *[style*="color:#64748b"] {
-  color: var(--txt3) !important;
+  color: var(--txt3) !important;   /* #cbd5e1 light */
 }
 
 [data-theme="dark"] *[style*="color: #94a3b8"],
 [data-theme="dark"] *[style*="color:#94a3b8"] {
-  color: var(--txt4) !important;
+  color: var(--txt4) !important;   /* #94a3b8 medium */
 }
 
-/* ===== ALL BORDER COLORS ===== */
+/* ===== BORDERS ===== */
 [data-theme="dark"] *[style*="border: 1px solid #e2e8f0"],
 [data-theme="dark"] *[style*="border:1px solid #e2e8f0"],
 [data-theme="dark"] *[style*="borderBottom: 1px solid #e2e8f0"],
@@ -197,14 +218,31 @@
   -webkit-text-fill-color: #f1f5f9 !important;
 }
 
-/* ===== TABLES ===== */
-[data-theme="dark"] table { background: var(--bg2) !important; }
+/* ===== TABLES - BRIGHT TEXT ===== */
+[data-theme="dark"] table {
+  background: var(--bg2) !important;
+}
+
 [data-theme="dark"] thead,
-[data-theme="dark"] th { background: var(--table-head) !important; color: var(--txt4) !important; }
-[data-theme="dark"] td { background: var(--bg2) !important; color: var(--txt2) !important; border-color: var(--border2) !important; }
-[data-theme="dark"] tr:hover td { background: var(--table-hover) !important; }
+[data-theme="dark"] th {
+  background: var(--table-head) !important;
+  color: #94a3b8 !important;       /* Column headers - medium */
+}
+
+[data-theme="dark"] td {
+  background: var(--bg2) !important;
+  color: #e2e8f0 !important;       /* Table data - BRIGHT */
+  border-color: var(--border2) !important;
+}
+
+[data-theme="dark"] tr:hover td {
+  background: var(--table-hover) !important;
+}
+
 [data-theme="dark"] *[style*="background: #f8faff"],
-[data-theme="dark"] *[style*="background:#f8faff"] { background: var(--table-hover) !important; }
+[data-theme="dark"] *[style*="background:#f8faff"] {
+  background: var(--table-hover) !important;
+}
 
 /* ===== CARDS ===== */
 [data-theme="dark"] .card {
@@ -214,39 +252,61 @@
   color: var(--txt1) !important;
 }
 
+/* ===== TAGS (BP, Diabetes, etc.) ===== */
+[data-theme="dark"] .tag {
+  background: var(--tag-bg) !important;
+  color: var(--tag-txt) !important;
+  border-color: var(--border) !important;
+}
+
+/* Tags with inline bg colors */
+[data-theme="dark"] span[style*="background"][style*="18"] {
+  color: inherit !important;
+  opacity: 1 !important;
+}
+
+/* ===== STATUS BADGES (In Stock, etc.) ===== */
+[data-theme="dark"] *[style*="background: #dcfce7"],
+[data-theme="dark"] *[style*="background:#dcfce7"] {
+  background: rgba(34,197,94,0.2) !important;
+  color: #4ade80 !important;
+}
+
+[data-theme="dark"] *[style*="background: #fef9c3"],
+[data-theme="dark"] *[style*="background:#fef9c3"] {
+  background: rgba(234,179,8,0.2) !important;
+  color: #facc15 !important;
+}
+
+[data-theme="dark"] *[style*="background: #fee2e2"],
+[data-theme="dark"] *[style*="background:#fee2e2"] {
+  background: rgba(239,68,68,0.2) !important;
+  color: #f87171 !important;
+}
+
 /* ===== ALERTS ===== */
-[data-theme="dark"] *[style*="background: #fef2f2"] { background: rgba(239,68,68,0.15) !important; }
-[data-theme="dark"] *[style*="background: #f0fdf4"] { background: rgba(34,197,94,0.1) !important; }
-[data-theme="dark"] *[style*="background: #eff6ff"] { background: rgba(59,130,246,0.1) !important; }
-[data-theme="dark"] *[style*="background: #fef3c7"] { background: rgba(251,191,36,0.1) !important; }
-[data-theme="dark"] *[style*="background: #f0f9ff"] { background: rgba(14,165,233,0.1) !important; }
+[data-theme="dark"] *[style*="background: #fef2f2"] { background: rgba(239,68,68,0.15) !important; color: #fca5a5 !important; }
+[data-theme="dark"] *[style*="background: #f0fdf4"] { background: rgba(34,197,94,0.1) !important; color: #86efac !important; }
+[data-theme="dark"] *[style*="background: #eff6ff"] { background: rgba(59,130,246,0.1) !important; color: #93c5fd !important; }
+[data-theme="dark"] *[style*="background: #fef3c7"] { background: rgba(251,191,36,0.1) !important; color: #fcd34d !important; }
+[data-theme="dark"] *[style*="background: #f0f9ff"] { background: rgba(14,165,233,0.1) !important; color: #7dd3fc !important; }
 
-/* ===== BUTTONS ===== */
-[data-theme="dark"] .btn-secondary,
-[data-theme="dark"] *[style*="background: #f1f5f9"][role="button"] {
-  background: var(--btn2-bg) !important;
-  color: var(--btn2-txt) !important;
-}
-
-/* ===== GRADIENT SECTIONS (keep as-is, they look good in dark) ===== */
-[data-theme="dark"] *[style*="background: linear-gradient(135deg, #1e293b"],
-[data-theme="dark"] *[style*="background: linear-gradient(135deg,#1e293b"] {
-  /* keep the dark gradient */
-}
-
-/* ===== h1, h2, h3, p, labels, spans with dark text ===== */
-[data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3,
-[data-theme="dark"] h4, [data-theme="dark"] h5, [data-theme="dark"] h6 {
+/* ===== HEADING & LABEL TEXT ===== */
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
   color: var(--txt1) !important;
 }
 
 [data-theme="dark"] p { color: var(--txt2) !important; }
 [data-theme="dark"] label { color: var(--txt3) !important; }
 [data-theme="dark"] small { color: var(--txt4) !important; }
-[data-theme="dark"] span { color: inherit; }
 
 /* =====================================================
-   BASE STYLES (SAME AS BEFORE)
+   BASE STYLES
 ===================================================== */
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -278,11 +338,11 @@ body { font-family: 'Outfit', sans-serif; background: var(--bg1); color: var(--t
 .pulse-dot { animation: pulse 2s infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
 
-.nav-item { transition: all 0.2s; color: var(--txt3); }
+.nav-item { transition: all 0.2s; color: var(--sidebar-txt); }
 .nav-item:hover { background: var(--nav-hover); color: var(--primary); }
 .nav-item.active { background: linear-gradient(135deg, var(--primary), var(--primary2)); color: white; box-shadow: 0 4px 12px rgba(37,99,235,0.35); }
 
-.tag { border-radius: 6px; padding: 3px 10px; font-size: 12px; font-weight: 600; display: inline-block; background: var(--tag-bg); color: var(--txt2); }
+.tag { border-radius: 6px; padding: 3px 10px; font-size: 12px; font-weight: 600; display: inline-block; background: var(--tag-bg); color: var(--tag-txt); }
 
 .data-table { width: 100%; border-collapse: collapse; }
 .data-table th { padding: 12px 20px; font-size: 11px; font-weight: 700; color: var(--txt4); text-align: left; text-transform: uppercase; letter-spacing: 0.05em; background: var(--table-head); }
@@ -298,7 +358,7 @@ body { font-family: 'Outfit', sans-serif; background: var(--bg1); color: var(--t
 
 .bar { border-radius: 4px 4px 0 0; transition: height 0.6s ease; }
 
-/* Dark mode toggle button */
+/* Dark mode toggle */
 .dark-toggle {
   position: fixed; bottom: 20px; right: 20px; z-index: 9999;
   width: 48px; height: 48px; border-radius: 50%;
@@ -306,17 +366,20 @@ body { font-family: 'Outfit', sans-serif; background: var(--bg1); color: var(--t
   color: white; border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   font-size: 22px; box-shadow: 0 4px 16px rgba(37,99,235,0.4);
-  transition: transform 0.2s ease;
 }
 .dark-toggle:hover { transform: scale(1.1); }
 .dark-toggle:active { transform: scale(0.95); }
+
+/* dark-mode-toggle class (for old toggle component) */
+.dark-mode-toggle {
+  position: fixed; bottom: 20px; right: 20px; z-index: 9999;
+}
 
 /* Smooth transitions */
 *, *::before, *::after {
   transition: background-color 0.25s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
-/* Accessibility */
 :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 ::selection { background: var(--primary); color: white; }
 
@@ -325,5 +388,5 @@ body { font-family: 'Outfit', sans-serif; background: var(--bg1); color: var(--t
   .btn-primary, .btn-secondary { padding: 12px 16px !important; }
   .input { font-size: 16px !important; }
   .data-table { display: block; overflow-x: auto; }
-  .dark-toggle { width: 44px; height: 44px; font-size: 18px; bottom: 16px; right: 16px; }
+  .dark-toggle, .dark-mode-toggle { width: 44px; height: 44px; font-size: 18px; bottom: 16px; right: 16px; }
 }
