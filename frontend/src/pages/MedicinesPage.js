@@ -101,66 +101,66 @@ export default function MedicinesPage() {
   };
 
   const stockStatus = (m) => {
-    if (m.stock_qty === 0) return { label: "Out of Stock", color: "#ef4444", bg: "rgba(239, 68, 68, 0.15)" };
-    if (m.stock_qty <= m.low_stock_alert) return { label: "Low Stock", color: "#f59e0b", bg: "rgba(245, 158, 11, 0.15)" };
-    return { label: "In Stock", color: "#10b981", bg: "rgba(16, 185, 129, 0.15)" };
+    if (m.stock_qty === 0) return { label: "Out of Stock", color: "#ef4444", bg: "rgba(239, 68, 68, 0.12)" };
+    if (m.stock_qty <= m.low_stock_alert) return { label: "Low Stock", color: "#f59e0b", bg: "rgba(245, 158, 11, 0.12)" };
+    return { label: "In Stock", color: "#10b981", bg: "rgba(16, 185, 129, 0.12)" };
   };
 
   const set = k => e => setForm(f => ({...f, [k]: e.target.value}));
 
   return (
-    <div className="fade-in" style={{display:"flex",flexDirection:"column",gap:20}}>
+    <div className="fade-in" style={{display:"flex",flexDirection:"column",gap:20, width:"100%"}}>
 
-      {/* Toast Notifier Context */}
+      {/* Toast */}
       {toast && (
         <div style={{position:"fixed",top:20,right:24,zIndex:100,padding:"14px 20px",borderRadius:12,
-          background:toast.type==="error"?"var(--bg4)":"var(--bg2)",
+          background:toast.type==="error"?"rgba(239, 68, 68, 0.15)":"var(--bg2)",
           border:`1px solid ${toast.type==="error"?"#fca5a5":"#bbf7d0"}`,
           color:toast.type==="error"?"#dc2626":"#16a34a",
-          fontWeight:600,fontSize:14,boxShadow:"var(--shadow2)"}}>
+          fontWeight:600,fontSize:14,boxShadow:"0 8px 24px rgba(0,0,0,0.12)"}}>
           {toast.msg}
         </div>
       )}
 
-      {/* Summary Metrics Row */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
+      {/* Summary Cards */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(220px, 1fr))",gap:14}}>
         {[
-          {label:"Total Medicines", value:summary.total,        icon:"💊", color:"var(--primary)", bg:"var(--bg2)"},
+          {label:"Total Medicines", value:summary.total,        icon:"💊", color:"#2563eb", bg:"var(--bg2)"},
           {label:"Low Stock Alert", value:summary.lowStock,     icon:"⚠️", color:"#f59e0b", bg:"var(--bg2)"},
           {label:"Categories",      value:summary.categories?.length||0, icon:"📂", color:"#7c3aed", bg:"var(--bg2)"},
           {label:"Stock Value",     value:`₹${((summary.totalValue||0)/1000).toFixed(1)}k`, icon:"💰", color:"#10b981", bg:"var(--bg2)"},
         ].map((s,i)=>(
-          <div key={i} className="card" style={{padding:20, background:s.bg, borderColor:"var(--border)"}}>
-            <div style={{display:"flex",alignItems:"center",gap:10}}>
-              <span style={{fontSize:26}}>{s.icon}</span>
+          <div key={i} className="card" style={{padding:20, background:s.bg, border:"1px solid var(--border)"}}>
+            <div style={{display:"flex",alignItems:"center",gap:14}}>
+              <span style={{fontSize:26, flexShrink:0}}>{s.icon}</span>
               <div>
-                <div style={{fontSize:22,fontWeight:800,color:s.color}}>{s.value}</div>
-                <div style={{fontSize:12,color:"var(--txt3)"}}>{s.label}</div>
+                <div style={{fontSize:22,fontWeight:800,color:s.color,lineHeight:1.2}}>{s.value}</div>
+                <div style={{fontSize:12,color:"var(--txt3)",marginTop:2}}>{s.label}</div>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Control Filter Bar */}
-      <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
+      {/* Toolbar Controls */}
+      <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap", width:"100%"}}>
         <input className="input" placeholder="🔍 Search medicines..." value={search}
           onChange={e=>setSearch(e.target.value)} style={{flex:1,minWidth:200}} />
-        <select className="input" value={category} onChange={e=>setCategory(e.target.value)} style={{width:160, background:"var(--input-bg)", color:"var(--txt1)"}}>
+        <select className="input" value={category} onChange={e=>setCategory(e.target.value)} style={{width:160, background:"var(--input-bg, var(--bg2))", color:"var(--txt1)"}}>
           {CATEGORIES.map(c=><option key={c} value={c}>{c==="all"?"All Categories":c}</option>)}
         </select>
         <button onClick={()=>setShowLowStock(s=>!s)}
           style={{padding:"10px 16px",border:`1.5px solid ${showLowStock?"#f59e0b":"var(--border)"}`,
             borderRadius:10,background:showLowStock?"rgba(245, 158, 11, 0.15)":"var(--bg2)",color:showLowStock?"#d97706":"var(--txt2)",
-            fontWeight:600,cursor:"pointer",fontSize:13,fontFamily:"inherit",whiteSpace:"nowrap"}}>
+            fontWeight:600,cursor:"pointer",fontSize:13,fontFamily:"inherit",whiteSpace:"nowrap",height:42,boxSizing:"border-box"}}>
           ⚠️ Low Stock {showLowStock?"ON":"OFF"}
         </button>
-        <button className="btn-primary" onClick={openAdd} style={{whiteSpace:"nowrap"}}>+ Add Medicine</button>
+        <button className="btn-primary" onClick={openAdd} style={{whiteSpace:"nowrap", height:42}}>+ Add Medicine</button>
       </div>
 
-      {/* Main Medicine Interactive Data Table */}
-      <div className="card" style={{overflow:"hidden", background:"var(--bg2)", borderColor:"var(--border)"}}>
-        <div style={{padding:"14px 20px",borderBottom:"1px solid var(--border2)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+      {/* Table Area Layout Container */}
+      <div className="card" style={{overflowX:"auto", width:"100%", background:"var(--bg2)", border:"1px solid var(--border)"}}>
+        <div style={{padding:"14px 20px",borderBottom:"1px solid var(--border)",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div style={{fontSize:14,fontWeight:700,color:"var(--txt1)"}}>{medicines.length} medicines found</div>
           {summary.lowStock > 0 && (
             <div style={{fontSize:12,background:"rgba(245, 158, 11, 0.15)",color:"#d97706",padding:"4px 12px",borderRadius:20,fontWeight:700}}>
@@ -179,18 +179,18 @@ export default function MedicinesPage() {
             <button className="btn-primary" onClick={openAdd}>+ Add Medicine</button>
           </div>
         ) : (
-          <table className="data-table">
+          <table className="data-table" style={{width:"100%", borderCollapse:"collapse", textAlign:"left"}}>
             <thead>
               <tr>
-                <th style={{color:"var(--txt4)", background:"var(--table-head)"}}>Medicine</th>
-                <th style={{color:"var(--txt4)", background:"var(--table-head)"}}>Category</th>
-                <th style={{color:"var(--txt4)", background:"var(--table-head)"}}>Stock</th>
-                <th style={{color:"var(--txt4)", background:"var(--table-head)"}}>Status</th>
-                <th style={{color:"var(--txt4)", background:"var(--table-head)"}}>Cost Price</th>
-                <th style={{color:"var(--txt4)", background:"var(--table-head)"}}>Sell Price</th>
-                <th style={{color:"var(--txt4)", background:"var(--table-head)"}}>Margin</th>
-                <th style={{color:"var(--txt4)", background:"var(--table-head)"}}>Patients</th>
-                <th style={{color:"var(--txt4)", background:"var(--table-head)"}}>Actions</th>
+                <th style={{color:"var(--txt4)", background:"var(--table-head)", padding:"12px 16px", textAlign:"left", minWidth:180}}>Medicine</th>
+                <th style={{color:"var(--txt4)", background:"var(--table-head)", padding:"12px 16px", textAlign:"left", minWidth:120}}>Category</th>
+                <th style={{color:"var(--txt4)", background:"var(--table-head)", padding:"12px 16px", textAlign:"left", minWidth:90}}>Stock</th>
+                <th style={{color:"var(--txt4)", background:"var(--table-head)", padding:"12px 16px", textAlign:"left", minWidth:110}}>Status</th>
+                <th style={{color:"var(--txt4)", background:"var(--table-head)", padding:"12px 16px", textAlign:"left", minWidth:110}}>Cost Price</th>
+                <th style={{color:"var(--txt4)", background:"var(--table-head)", padding:"12px 16px", textAlign:"left", minWidth:110}}>Sell Price</th>
+                <th style={{color:"var(--txt4)", background:"var(--table-head)", padding:"12px 16px", textAlign:"left", minWidth:90}}>Margin</th>
+                <th style={{color:"var(--txt4)", background:"var(--table-head)", padding:"12px 16px", textAlign:"left", minWidth:90}}>Patients</th>
+                <th style={{color:"var(--txt4)", background:"var(--table-head)", padding:"12px 16px", textAlign:"left", minWidth:160}}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -198,45 +198,45 @@ export default function MedicinesPage() {
                 const st = stockStatus(m);
                 const mg = profit(m);
                 return (
-                  <tr key={m.id} style={{borderBottom:"1px solid var(--border2)"}}>
-                    <td>
+                  <tr key={m.id} style={{borderBottom:"1px solid var(--border)"}}>
+                    <td style={{padding:"12px 16px"}}>
                       <div style={{fontWeight:700,color:"var(--txt1)",fontSize:14}}>{m.name}</div>
-                      <div style={{fontSize:11,color:"var(--txt4)"}}>{m.manufacturer} · {m.unit}</div>
+                      <div style={{fontSize:11,color:"var(--txt4)",marginTop:2}}>{m.manufacturer} · {m.unit}</div>
                     </td>
-                    <td>
-                      <span style={{background:"var(--bg3)",color:"var(--txt2)",fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20}}>
+                    <td style={{padding:"12px 16px"}}>
+                      <span style={{background:"var(--bg3)",color:"var(--txt2)",fontSize:11,fontWeight:600,padding:"3px 10px",borderRadius:20,whiteSpace:"nowrap"}}>
                         {m.category||"—"}
                       </span>
                     </td>
-                    <td>
+                    <td style={{padding:"12px 16px"}}>
                       <div style={{fontWeight:800,fontSize:16,color:st.color}}>{m.stock_qty}</div>
                       <div style={{fontSize:10,color:"var(--txt4)"}}>alert at {m.low_stock_alert}</div>
                     </td>
-                    <td>
-                      <span style={{background:st.bg,color:st.color,fontSize:11,fontWeight:700,padding:"4px 10px",borderRadius:20}}>
+                    <td style={{padding:"12px 16px"}}>
+                      <span style={{background:st.bg,color:st.color,fontSize:11,fontWeight:700,padding:"4px 10px",borderRadius:20,whiteSpace:"nowrap"}}>
                         {st.label}
                       </span>
                     </td>
-                    <td style={{color:"var(--txt3)",fontWeight:500}}>₹{parseFloat(m.cost_price||0).toFixed(2)}</td>
-                    <td style={{color:"var(--txt1)",fontWeight:700}}>₹{parseFloat(m.price_per_unit||0).toFixed(2)}</td>
-                    <td>
+                    <td style={{padding:"12px 16px",color:"var(--txt3)",fontWeight:500}}>₹{parseFloat(m.cost_price||0).toFixed(2)}</td>
+                    <td style={{padding:"12px 16px",color:"var(--txt1)",fontWeight:700}}>₹{parseFloat(m.price_per_unit||0).toFixed(2)}</td>
+                    <td style={{padding:"12px 16px"}}>
                       {mg !== null ? (
                         <span style={{color:mg>20?"#10b981":mg>10?"#f59e0b":"#ef4444",fontWeight:700,fontSize:13}}>
                           {mg}%
                         </span>
                       ) : "—"}
                     </td>
-                    <td>
+                    <td style={{padding:"12px 16px"}}>
                       <span style={{color:"var(--primary)",fontWeight:700}}>{m.patient_count||0}</span>
                     </td>
-                    <td>
+                    <td style={{padding:"12px 16px"}}>
                       <div style={{display:"flex",gap:6}}>
                         <button onClick={()=>openStock(m)}
                           style={{padding:"6px 10px",background:"rgba(16, 185, 129, 0.15)",border:"none",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600,color:"#10b981",fontFamily:"inherit"}}>
                           📦 Stock
                         </button>
                         <button onClick={()=>openEdit(m)}
-                          style={{padding:"6px 10px",background:"rgba(59, 130, 246, 0.15)",border:"none",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600,color:"var(--primary)",fontFamily:"inherit"}}>
+                          style={{padding:"6px 10px",background:"rgba(37, 99, 235, 0.15)",border:"none",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600,color:"#2563eb",fontFamily:"inherit"}}>
                           ✏️
                         </button>
                         <button onClick={()=>deleteMedicine(m.id, m.name)}
@@ -253,57 +253,50 @@ export default function MedicinesPage() {
         )}
       </div>
 
-      {/* Add / Edit Form Modal */}
+      {/* Add / Edit Modal */}
       {(modal==="add"||modal==="edit") && (
         <div className="modal-backdrop" onClick={closeModal}>
-          <div className="card fade-in" style={{padding:32,width:"100%",maxWidth:560,maxHeight:"90vh",overflowY:"auto", background:"var(--bg2)", borderColor:"var(--border)"}} onClick={e=>e.stopPropagation()}>
+          <div className="card fade-in" style={{padding:32,width:"100%",maxWidth:560,maxHeight:"90vh",overflowY:"auto", background:"var(--bg2)", border:"1px solid var(--border)"}} onClick={e=>e.stopPropagation()}>
             <div style={{fontSize:18,fontWeight:800,color:"var(--txt1)",marginBottom:20}}>
               {modal==="add"?"➕ Add New Medicine":"✏️ Edit Medicine"}
             </div>
 
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
-              {/* Name */}
               <div style={{gridColumn:"1/-1"}}>
                 <label style={{fontSize:12,fontWeight:700,color:"var(--txt3)",display:"block",marginBottom:5}}>Medicine Name *</label>
                 <input className="input" placeholder="e.g. Metformin 500mg" value={form.name} onChange={set("name")} />
               </div>
 
-              {/* Category */}
               <div>
                 <label style={{fontSize:12,fontWeight:700,color:"var(--txt3)",display:"block",marginBottom:5}}>Category</label>
-                <select className="input" value={form.category} onChange={set("category")} style={{background:"var(--input-bg)", color:"var(--txt1)"}}>
+                <select className="input" value={form.category} onChange={set("category")} style={{background:"var(--input-bg, var(--bg2))", color:"var(--txt1)"}}>
                   <option value="">Select category</option>
                   {CATEGORIES.filter(c=>c!=="all").map(c=><option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
 
-              {/* Unit */}
               <div>
                 <label style={{fontSize:12,fontWeight:700,color:"var(--txt3)",display:"block",marginBottom:5}}>Unit</label>
-                <select className="input" value={form.unit} onChange={set("unit")} style={{background:"var(--input-bg)", color:"var(--txt1)"}}>
+                <select className="input" value={form.unit} onChange={set("unit")} style={{background:"var(--input-bg, var(--bg2))", color:"var(--txt1)"}}>
                   {UNITS.map(u=><option key={u} value={u}>{u}</option>)}
                 </select>
               </div>
 
-              {/* Manufacturer */}
               <div style={{gridColumn:"1/-1"}}>
                 <label style={{fontSize:12,fontWeight:700,color:"var(--txt3)",display:"block",marginBottom:5}}>Manufacturer</label>
                 <input className="input" placeholder="e.g. Sun Pharma, Cipla" value={form.manufacturer} onChange={set("manufacturer")} />
               </div>
 
-              {/* Cost Price */}
               <div>
                 <label style={{fontSize:12,fontWeight:700,color:"var(--txt3)",display:"block",marginBottom:5}}>Cost Price (₹)</label>
                 <input className="input" type="number" placeholder="0.00" value={form.costPrice} onChange={set("costPrice")} />
               </div>
 
-              {/* Sell Price */}
               <div>
                 <label style={{fontSize:12,fontWeight:700,color:"var(--txt3)",display:"block",marginBottom:5}}>Selling Price (₹)</label>
                 <input className="input" type="number" placeholder="0.00" value={form.pricePerUnit} onChange={set("pricePerUnit")} />
               </div>
 
-              {/* Margin preview alert element block */}
               {form.costPrice && form.pricePerUnit && (
                 <div style={{gridColumn:"1/-1",padding:"10px 14px",background:"rgba(16, 185, 129, 0.15)",borderRadius:10,fontSize:13, color:"var(--txt1)"}}>
                   💹 Profit margin: <strong style={{color:"#10b981"}}>
@@ -312,19 +305,16 @@ export default function MedicinesPage() {
                 </div>
               )}
 
-              {/* Stock */}
               <div>
                 <label style={{fontSize:12,fontWeight:700,color:"var(--txt3)",display:"block",marginBottom:5}}>Current Stock (qty)</label>
                 <input className="input" type="number" placeholder="0" value={form.stockQty} onChange={set("stockQty")} />
               </div>
 
-              {/* Low stock alert */}
               <div>
                 <label style={{fontSize:12,fontWeight:700,color:"var(--txt3)",display:"block",marginBottom:5}}>Low Stock Alert at</label>
                 <input className="input" type="number" placeholder="10" value={form.lowStockAlert} onChange={set("lowStockAlert")} />
               </div>
 
-              {/* Description */}
               <div style={{gridColumn:"1/-1"}}>
                 <label style={{fontSize:12,fontWeight:700,color:"var(--txt3)",display:"block",marginBottom:5}}>Notes (optional)</label>
                 <textarea className="input" rows={2} placeholder="Any notes about this medicine..." value={form.description} onChange={set("description")} style={{resize:"none"}} />
@@ -341,14 +331,13 @@ export default function MedicinesPage() {
         </div>
       )}
 
-      {/* Stock Quick Adjustment Modal Block */}
+      {/* Stock Update Modal */}
       {modal==="stock" && selected && (
         <div className="modal-backdrop" onClick={closeModal}>
-          <div className="card fade-in" style={{padding:32,width:"100%",maxWidth:420, background:"var(--bg2)", borderColor:"var(--border)"}} onClick={e=>e.stopPropagation()}>
+          <div className="card fade-in" style={{padding:32,width:"100%",maxWidth:420, background:"var(--bg2)", border:"1px solid var(--border)"}} onClick={e=>e.stopPropagation()}>
             <div style={{fontSize:18,fontWeight:800,color:"var(--txt1)",marginBottom:4}}>📦 Update Stock</div>
             <div style={{fontSize:13,color:"var(--txt4)",marginBottom:20}}>{selected.name}</div>
 
-            {/* Current stock display plate */}
             <div style={{padding:16,background:"var(--bg3)",borderRadius:12,textAlign:"center",marginBottom:20}}>
               <div style={{fontSize:11,color:"var(--txt4)",fontWeight:700,marginBottom:4}}>CURRENT STOCK</div>
               <div style={{fontSize:36,fontWeight:800,color:selected.stock_qty<=selected.low_stock_alert?"#f59e0b":"var(--txt1)"}}>
@@ -357,7 +346,6 @@ export default function MedicinesPage() {
               <div style={{fontSize:12,color:"var(--txt4)"}}>{selected.unit}s</div>
             </div>
 
-            {/* Adjustment Operation Mode Selector */}
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:16}}>
               {[
                 {value:"add",    label:"➕ Add",    desc:"Restock"},
@@ -368,7 +356,7 @@ export default function MedicinesPage() {
                   style={{padding:"10px 8px",border:`1.5px solid ${stockType===t.value?"var(--primary)":"var(--border)"}`,
                     borderRadius:10,background:stockType===t.value?"var(--nav-hover)":"var(--bg2)",
                     cursor:"pointer",fontFamily:"inherit",textAlign:"center"}}>
-                  <div style={{fontSize:12,fontWeight:700,color:stockType===t.value?"var(--primary)":"var(--txt2)"}}>{t.label}</div>
+                  <div style={{fontSize:12,fontWeight:700,color:stockType===t.value?"var(--primary)":"var(--txt1)"}}>{t.label}</div>
                   <div style={{fontSize:10,color:"var(--txt4)"}}>{t.desc}</div>
                 </button>
               ))}
@@ -404,4 +392,3 @@ export default function MedicinesPage() {
     </div>
   );
 }
-        
