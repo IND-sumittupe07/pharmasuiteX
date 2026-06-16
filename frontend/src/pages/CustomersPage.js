@@ -28,7 +28,7 @@ export default function CustomersPage() {
   }, [loadCustomers]);
 
   return (
-    <div className="fade-in" style={{ display: "flex", flexDirection: "column", gap: 20, width: "100%", height: "100%", boxSizing: "border-box" }}>
+    <div className="fade-in" style={{ display: "flex", flexDirection: "column", gap: 20, width: "100%", boxSizing: "border-box" }}>
       
       {/* Toast Alert Notification */}
       {toast && (
@@ -106,7 +106,7 @@ export default function CustomersPage() {
                       <button style={{ padding: "6px 12px", background: "rgba(37, 99, 235, 0.12)", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 12, fontWeight: 600, color: "#2563eb", fontFamily: "inherit" }}>
                         ✏️ Edit
                       </button>
-                    </button>
+                    </div>
                   </td>
                 </tr>
               ))}
