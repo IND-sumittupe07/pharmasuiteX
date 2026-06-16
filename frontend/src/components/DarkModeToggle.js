@@ -7,10 +7,10 @@ export default function DarkModeToggle() {
     <button
       onClick={toggleTheme}
       className="dark-toggle"
-      title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-      aria-label={isDark ? "Light mode" : "Dark mode"}
+      title={isDarkmode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+      aria-label={isDarkmode ? "Light mode" : "Dark mode"}
     >
-      {isDark ? "☀️" : "🌙"}
+      {isDarkmode ? "☀️" : "🌙"}
     </button>
   );
 }
