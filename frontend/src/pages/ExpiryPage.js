@@ -1,6 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import api from "../api/client";
 
+const conditionColor = {
+  diabetes: "#3b82f6",
+  hypertension: "#ef4444",
+  asthma: "#f59e0b",
+  arthritis: "#8b5cf6",
+};
+
 export default function ExpiryPage() {
   const [batches, setBatches]     = useState([]);
   const [summary, setSummary]     = useState({});
@@ -74,19 +81,19 @@ export default function ExpiryPage() {
   };
 
   const expiryStatus = (days) => {
-    if (days < 0)   return { label:"Expired",        color:"#ef4444", bg:"#fef2f2" };
-    if (days <= 30) return { label:`${days}d left`,  color:"#ef4444", bg:"#fef2f2" };
-    if (days <= 90) return { label:`${days}d left`,  color:"#f59e0b", bg:"#fffbeb" };
-    return              { label:`${days}d left`,  color:"#10b981", bg:"#f0fdf4" };
+    if (days < 0)   return { label:"Expired",        color:"#ef4444", bg:"rgba(239, 68, 68, 0.15)" };
+    if (days <= 30) return { label:`${days}d left`,  color:"#ef4444", bg:"rgba(239, 68, 68, 0.15)" };
+    if (days <= 90) return { label:`${days}d left`,  color:"#f59e0b", bg:"rgba(245, 158, 11, 0.15)" };
+    return              { label:`${days}d left`,  color:"#10b981", bg:"rgba(16, 185, 129, 0.15)" };
   };
 
   return (
-    <div className="fade-in" style={{display:"flex",flexDirection:"column",gap:16}}>
+    <div className="fade-in" style={{display:"flex", flexDirection:"column", gap:20, width:"100%", boxSizing:"border-box"}}>
 
       {/* Toast */}
       {toast && (
         <div style={{position:"fixed",top:20,right:24,zIndex:100,padding:"14px 20px",borderRadius:12,
-          background:toast.type==="error"?"#fef2f2":"#f0fdf4",
+          background:toast.type==="error"?"rgba(239, 68, 68, 0.15)":"var(--bg2)",
           border:`1px solid ${toast.type==="error"?"#fca5a5":"#bbf7d0"}`,
           color:toast.type==="error"?"#dc2626":"#16a34a",fontWeight:600,fontSize:14,
           boxShadow:"0 8px 24px rgba(0,0,0,0.12)"}}>
@@ -97,7 +104,7 @@ export default function ExpiryPage() {
       {/* PWA Install Banner */}
       {showInstall && (
         <div style={{padding:"14px 20px",background:"linear-gradient(135deg,#2563eb,#7c3aed)",borderRadius:14,
-          display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          display:"flex",justifyContent:"space-between",alignItems:"center", flexWrap:"wrap", gap:12, width:"100%", boxSizing:"border-box"}}>
           <div>
             <div style={{fontSize:14,fontWeight:700,color:"white"}}>📱 Install PharmaSuiteX App</div>
             <div style={{fontSize:12,color:"#bfdbfe",marginTop:2}}>Add to your desktop for quick access — works offline too!</div>
@@ -117,43 +124,43 @@ export default function ExpiryPage() {
         </div>
       )}
 
-      {error && (<div style={{padding:"12px 16px",background:"#fef2f2",border:"1px solid #fca5a5",borderRadius:10,color:"#dc2626",fontSize:13,fontWeight:600}}>⚠️ {error}</div>)}
+      {error && (<div style={{padding:"12px 16px",background:"rgba(239, 68, 68, 0.15)",border:"1px solid #fca5a5",borderRadius:10,color:"#dc2626",fontSize:13,fontWeight:600}}>⚠️ {error}</div>)}
 
-      {/* Summary Cards */}
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
+      {/* Summary Cards Grid: Fixed to repeat adaptively without compressing */}
+      <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(220px, 1fr))", gap:16, width:"100%"}}>
         {[
-          {label:"Expired",       value:summary.expired||0,      icon:"💀", color:"#ef4444", bg:"#fef2f2"},
-          {label:"Expiring (30d)",value:summary.expiring30||0,   icon:"🚨", color:"#ef4444", bg:"#fef2f2"},
-          {label:"Expiring (90d)",value:summary.expiring90||0,   icon:"⚠️", color:"#f59e0b", bg:"#fffbeb"},
-          {label:"Total Batches", value:summary.totalBatches||0, icon:"📦", color:"#2563eb", bg:"#eff6ff"},
+          {label:"Expired",       value:summary.expired||0,      icon:"💀", color:"#ef4444", bg:"rgba(239, 68, 68, 0.1)"},
+          {label:"Expiring (30d)",value:summary.expiring30||0,   icon:"🚨", color:"#ef4444", bg:"rgba(239, 68, 68, 0.1)"},
+          {label:"Expiring (90d)",value:summary.expiring90||0,   icon:"⚠️", color:"#f59e0b", bg:"rgba(245, 158, 11, 0.1)"},
+          {label:"Total Batches", value:summary.totalBatches||0, icon:"📦", color:"var(--primary, #2563eb)", bg:"rgba(37, 99, 235, 0.1)"},
         ].map((s,i)=>(
-          <div key={i} className="card" style={{padding:20,background:s.bg}}>
-            <div style={{display:"flex",alignItems:"center",gap:10}}>
-              <span style={{fontSize:26}}>{s.icon}</span>
+          <div key={i} className="card" style={{padding:20, background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:12}}>
+            <div style={{display:"flex",alignItems:"center",gap:14}}>
+              <div style={{fontSize:26, width:48, height:48, borderRadius:10, background:s.bg, display:"flex", alignItems:"center", justifyContent: "center"}}>{s.icon}</div>
               <div>
                 <div style={{fontSize:24,fontWeight:800,color:s.color}}>{s.value}</div>
-                <div style={{fontSize:12,color:"#64748b"}}>{s.label}</div>
+                <div style={{fontSize:12,color:"var(--txt4)"}}>{s.label}</div>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Toolbar */}
-      <div style={{display:"flex",gap:10,alignItems:"center",flexWrap:"wrap"}}>
-        <div style={{display:"flex",gap:6,background:"#f1f5f9",borderRadius:12,padding:4}}>
+      {/* Toolbar Setup */}
+      <div style={{display:"flex",gap:12,alignItems:"center",flexWrap:"wrap", width:"100%"}}>
+        <div style={{display:"flex",gap:4,background:"var(--border)",borderRadius:12,padding:4}}>
           {[["all","All"],["expiring","Expiring"],["expired","Expired"]].map(([v,l])=>(
             <button key={v} onClick={()=>setFilter(v)}
-              style={{padding:"8px 14px",border:"none",borderRadius:8,cursor:"pointer",
+              style={{padding:"8px 16px",border:"none",borderRadius:8,cursor:"pointer",
                 fontFamily:"inherit",fontWeight:600,fontSize:12,
-                background:filter===v?"white":"transparent",
-                color:filter===v?"#2563eb":"#64748b",
+                background:filter===v?"var(--bg1)":"transparent",
+                color:filter===v?"var(--primary, #2563eb)":"var(--txt3)",
                 boxShadow:filter===v?"0 1px 4px rgba(0,0,0,0.1)":"none"}}>
               {l}
             </button>
           ))}
         </div>
-        <select className="input" value={days} onChange={e=>setDays(e.target.value)} style={{width:160}}>
+        <select className="input" value={days} onChange={e=>setDays(e.target.value)} style={{width:160, height:40, background:"var(--bg2)", color:"var(--txt1)"}}>
           <option value={30}>Next 30 days</option>
           <option value={60}>Next 60 days</option>
           <option value={90}>Next 90 days</option>
@@ -161,36 +168,36 @@ export default function ExpiryPage() {
           <option value={365}>Next 1 year</option>
           <option value={9999}>All time</option>
         </select>
-        <button className="btn-primary" style={{marginLeft:"auto"}} onClick={()=>setShowAdd(true)}>
+        <button className="btn-primary" style={{marginLeft:"auto", height:40}} onClick={()=>setShowAdd(true)}>
           + Add Batch
         </button>
       </div>
 
-      {/* Batches Table */}
-      <div className="card" style={{overflow:"hidden"}}>
+      {/* Batches Table Container Card */}
+      <div className="card" style={{width:"100%", overflowX: "auto", background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:12}}>
         {loading ? (
-          <div style={{textAlign:"center",padding:48,color:"#94a3b8"}}>Loading...</div>
+          <div style={{textAlign:"center",padding:48,color:"var(--txt4)"}}>Loading batch listings...</div>
         ) : batches.length === 0 ? (
           <div style={{textAlign:"center",padding:60}}>
             <div style={{fontSize:48,marginBottom:12}}>📦</div>
-            <div style={{fontSize:16,fontWeight:700,color:"#1e293b",marginBottom:8}}>No batches found</div>
-            <div style={{fontSize:13,color:"#94a3b8",marginBottom:20}}>
-              {filter==="expired" ? "No expired batches — great!" : "Add medicine batches to track expiry dates"}
+            <div style={{fontSize:16,fontWeight:700,color:"var(--txt1)",marginBottom:8}}>No batches found</div>
+            <div style={{fontSize:13,color:"var(--txt4)",marginBottom:20}}>
+              {filter==="expired" ? "No expired batches — great job!" : "Add medicine batches to track expiry timelines"}
             </div>
             {filter==="all" && <button className="btn-primary" onClick={()=>setShowAdd(true)}>+ Add First Batch</button>}
           </div>
         ) : (
-          <table className="data-table">
+          <table className="data-table" style={{width:"100%", borderCollapse:"collapse", textAlign:"left"}}>
             <thead>
-              <tr>
-                <th>Medicine Name</th>
-                <th>Batch No.</th>
-                <th>Expiry Date</th>
-                <th>Status</th>
-                <th>Qty</th>
-                <th>Buy Price</th>
-                <th>Sell Price</th>
-                <th>Supplier</th>
+              <tr style={{background:"var(--table-head)"}}>
+                <th style={{color:"var(--txt4)", padding:"14px 20px", fontSize:12, fontWeight:700, textTransform:"uppercase"}}>Medicine Name</th>
+                <th style={{color:"var(--txt4)", padding:"14px 20px", fontSize:12, fontWeight:700, textTransform:"uppercase"}}>Batch No.</th>
+                <th style={{color:"var(--txt4)", padding:"14px 20px", fontSize:12, fontWeight:700, textTransform:"uppercase"}}>Expiry Date</th>
+                <th style={{color:"var(--txt4)", padding:"14px 20px", fontSize:12, fontWeight:700, textTransform:"uppercase"}}>Status</th>
+                <th style={{color:"var(--txt4)", padding:"14px 20px", fontSize:12, fontWeight:700, textTransform:"uppercase"}}>Qty</th>
+                <th style={{color:"var(--txt4)", padding:"14px 20px", fontSize:12, fontWeight:700, textTransform:"uppercase"}}>Buy Price</th>
+                <th style={{color:"var(--txt4)", padding:"14px 20px", fontSize:12, fontWeight:700, textTransform:"uppercase"}}>Sell Price</th>
+                <th style={{color:"var(--txt4)", padding:"14px 20px", fontSize:12, fontWeight:700, textTransform:"uppercase"}}>Supplier</th>
               </tr>
             </thead>
             <tbody>
@@ -198,24 +205,24 @@ export default function ExpiryPage() {
                 const daysLeft = parseInt(b.days_to_expiry) || 0;
                 const st = expiryStatus(daysLeft);
                 return (
-                  <tr key={b.id}>
-                    <td>
-                      <div style={{fontWeight:700,color:"#1e293b"}}>{b.medicine_name}</div>
+                  <tr key={b.id} style={{borderBottom:"1px solid var(--border)"}}>
+                    <td style={{padding:"14px 20px"}}>
+                      <div style={{fontWeight:700,color:"var(--txt1)", fontSize:14}}>{b.medicine_name}</div>
                     </td>
-                    <td style={{fontFamily:"monospace",color:"#475569",fontWeight:600}}>{b.batch_number}</td>
-                    <td style={{fontWeight:600,color:"#1e293b"}}>
+                    <td style={{padding:"14px 20px", fontFamily:"monospace",color:"var(--txt2)",fontWeight:600, fontSize:13}}>{b.batch_number}</td>
+                    <td style={{padding:"14px 20px", fontWeight:600,color:"var(--txt1)", fontSize:13}}>
                       {new Date(b.expiry_date).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})}
                     </td>
-                    <td>
+                    <td style={{padding:"14px 20px"}}>
                       <span style={{background:st.bg,color:st.color,padding:"4px 12px",
                         borderRadius:20,fontSize:11,fontWeight:700,whiteSpace:"nowrap"}}>
                         {st.label}
                       </span>
                     </td>
-                    <td style={{fontWeight:700,fontSize:15}}>{b.quantity}</td>
-                    <td style={{color:"#64748b"}}>₹{parseFloat(b.purchase_price||0).toFixed(2)}</td>
-                    <td style={{color:"#10b981",fontWeight:600}}>₹{parseFloat(b.selling_price||0).toFixed(2)}</td>
-                    <td style={{color:"#64748b",fontSize:12}}>{b.supplier_name||"—"}</td>
+                    <td style={{padding:"14px 20px", fontWeight:700,fontSize:14, color:"var(--txt1)"}}>{b.quantity}</td>
+                    <td style={{padding:"14px 20px", color:"var(--txt3)", fontSize:13}}>₹{parseFloat(b.purchase_price||0).toFixed(2)}</td>
+                    <td style={{padding:"14px 20px", color:"#10b981",fontWeight:600, fontSize:13}}>₹{parseFloat(b.selling_price||0).toFixed(2)}</td>
+                    <td style={{padding:"14px 20px", color:"var(--txt4)",fontSize:13}}>{b.supplier_name||"—"}</td>
                   </tr>
                 );
               })}
@@ -227,16 +234,16 @@ export default function ExpiryPage() {
       {/* Add Batch Modal */}
       {showAdd && (
         <div className="modal-backdrop" onClick={()=>setShowAdd(false)}>
-          <div className="card fade-in" style={{padding:28,width:"100%",maxWidth:520,maxHeight:"90vh",overflowY:"auto"}}
+          <div className="card fade-in" style={{padding:28,width:"100%",maxWidth:520,maxHeight:"90vh",overflowY:"auto", background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:12}}
             onClick={e=>e.stopPropagation()}>
-            <div style={{fontSize:17,fontWeight:800,color:"#1e293b",marginBottom:18}}>📦 Add Medicine Batch</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div style={{fontSize:17,fontWeight:800,color:"var(--txt1)",marginBottom:18}}>📦 Add Medicine Batch</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
               <div style={{gridColumn:"1/-1"}}>
-                <label style={{fontSize:12,fontWeight:700,color:"#64748b",display:"block",marginBottom:5}}>Medicine *</label>
+                <label style={{fontSize:12,fontWeight:700,color:"var(--txt3)",display:"block",marginBottom:5}}>Medicine *</label>
                 <select className="input" value={form.medicineId} onChange={e => {
                   const med = medicines.find(m=>m.id===e.target.value);
                   setForm(f=>({...f, medicineId:e.target.value, medicineName:med?.name||""}));
-                }}>
+                }} style={{background:"var(--input-bg, var(--bg2))", color:"var(--txt1)"}}>
                   <option value="">Select medicine...</option>
                   {medicines.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}
                 </select>
@@ -254,25 +261,25 @@ export default function ExpiryPage() {
                 ["sellingPrice","Selling Price (₹)","number","0.00"],
               ].map(([k,l,t,p])=>(
                 <div key={k}>
-                  <label style={{fontSize:12,fontWeight:700,color:"#64748b",display:"block",marginBottom:5}}>{l}</label>
+                  <label style={{fontSize:12,fontWeight:700,color:"var(--txt3)",display:"block",marginBottom:5}}>{l}</label>
                   <input className="input" type={t} placeholder={p} value={form[k]}
-                    onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} />
+                    onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} style={{background:"var(--input-bg, var(--bg2))", color:"var(--txt1)"}} />
                 </div>
               ))}
               <div>
-                <label style={{fontSize:12,fontWeight:700,color:"#64748b",display:"block",marginBottom:5}}>Supplier</label>
+                <label style={{fontSize:12,fontWeight:700,color:"var(--txt3)",display:"block",marginBottom:5}}>Supplier</label>
                 <select className="input" value={form.supplierId}
-                  onChange={e=>setForm(f=>({...f,supplierId:e.target.value}))}>
+                  onChange={e=>setForm(f=>({...f,supplierId:e.target.value}))} style={{background:"var(--input-bg, var(--bg2))", color:"var(--txt1)"}}>
                   <option value="">Select supplier...</option>
                   {suppliers.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
             </div>
-            <div style={{display:"flex",gap:10,marginTop:18}}>
-              <button className="btn-primary" style={{flex:1}} onClick={addBatch} disabled={saving}>
+            <div style={{display:"flex",gap:10,marginTop:20}}>
+              <button className="btn-primary" style={{flex:1, height:42}} onClick={addBatch} disabled={saving}>
                 {saving?"Adding...":"Add Batch"}
               </button>
-              <button className="btn-secondary" style={{flex:1}} onClick={()=>setShowAdd(false)}>Cancel</button>
+              <button className="btn-secondary" style={{flex:1, height:42}} onClick={()=>setShowAdd(false)}>Cancel</button>
             </div>
           </div>
         </div>
