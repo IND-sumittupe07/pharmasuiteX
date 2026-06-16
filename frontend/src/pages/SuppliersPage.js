@@ -25,7 +25,7 @@ export default function SuppliersPage() {
       api.get("/suppliers"),
       api.get("/suppliers/purchase-orders"),
       api.get("/medicines"),
-    ]).then(([s, po, m]) => { setSuppliers(s.data); setOrders(po.data); setMedicines(m.data); });
+    ]).then(([s, po, m]) => { setSuppliers(s.data || []); setOrders(po.data || []); setMedicines(m.data || []); });
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -71,10 +71,12 @@ export default function SuppliersPage() {
   const set = k => e => setForm(f=>({...f,[k]:e.target.value}));
 
   return (
-    <div className="fade-in" style={{display:"flex",flexDirection:"column",gap:16}}>
+    <div className="fade-in" style={{display:"flex", flexDirection:"column", gap:20, width:"100%", boxSizing:"border-box"}}>
+      
+      {/* Toast Alert popups */}
       {toast && (
         <div style={{position:"fixed",top:20,right:24,zIndex:100,padding:"14px 20px",borderRadius:12,
-          background:toast.type==="error"?"#fef2f2":"#f0fdf4",
+          background:toast.type==="error"?"rgba(239, 68, 68, 0.15)":"var(--bg2)",
           border:`1px solid ${toast.type==="error"?"#fca5a5":"#bbf7d0"}`,
           color:toast.type==="error"?"#dc2626":"#16a34a",fontWeight:600,fontSize:14,
           boxShadow:"0 8px 24px rgba(0,0,0,0.12)"}}>
@@ -82,65 +84,70 @@ export default function SuppliersPage() {
         </div>
       )}
 
-      {/* Tabs + Actions */}
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <div style={{display:"flex",gap:6,background:"#f1f5f9",borderRadius:12,padding:4}}>
+      {/* Tabs + Actions Navigation */}
+      <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:12, width:"100%"}}>
+        <div style={{display:"flex", gap:4, background:"var(--border)", borderRadius:12, padding:4}}>
           {[["suppliers","🏭 Suppliers"],["orders","📋 Purchase Orders"]].map(([v,l])=>(
             <button key={v} onClick={()=>setTab(v)}
-              style={{padding:"9px 16px",border:"none",borderRadius:8,cursor:"pointer",fontFamily:"inherit",fontWeight:600,fontSize:13,
-                background:tab===v?"white":"transparent",color:tab===v?"#2563eb":"#64748b",
+              style={{padding:"9px 16px", border:"none", borderRadius:8, cursor:"pointer", fontFamily:"inherit", fontWeight:600, fontSize:13,
+                background:tab===v?"var(--bg1)":"transparent", color:tab===v?"var(--primary, #2563eb)":"var(--txt3)",
                 boxShadow:tab===v?"0 1px 4px rgba(0,0,0,0.1)":"none"}}>
               {l}
             </button>
           ))}
         </div>
-        <div style={{display:"flex",gap:8}}>
-          <button className="btn-secondary" onClick={()=>{setModal("po");}}>📋 New Purchase Order</button>
-          <button className="btn-primary" onClick={()=>{setForm(emptyForm);setSelected(null);setModal("add");}}>+ Add Supplier</button>
+        <div style={{display:"flex", gap:8}}>
+          <button className="btn-secondary" style={{height:40}} onClick={()=>{setModal("po");}}>📋 New Purchase Order</button>
+          <button className="btn-primary" style={{height:40}} onClick={()=>{setForm(emptyForm);setSelected(null);setModal("add");}}>+ Add Supplier</button>
         </div>
       </div>
 
-      {/* Suppliers List */}
+      {/* TAB 1: Suppliers Responsive Card Grid */}
       {tab==="suppliers" && (
-        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14}}>
+        <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(300px, 1fr))", gap:16, width:"100%"}}>
           {suppliers.length===0 ? (
-            <div style={{gridColumn:"1/-1",textAlign:"center",padding:60,background:"white",borderRadius:16}}>
-              <div style={{fontSize:48,marginBottom:12}}>🏭</div>
-              <div style={{fontSize:16,fontWeight:700,color:"#1e293b",marginBottom:8}}>No suppliers yet</div>
+            <div style={{gridColumn:"1/-1", textAlign:"center", padding:60, background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:16}}>
+              <div style={{fontSize:48, marginBottom:12}}>🏭</div>
+              <div style={{fontSize:16, fontWeight:700, color:"var(--txt1)", marginBottom:8}}>No suppliers yet</div>
               <button className="btn-primary" onClick={()=>{setForm(emptyForm);setModal("add");}}>+ Add First Supplier</button>
             </div>
           ) : suppliers.map(s=>(
-            <div key={s.id} className="card" style={{padding:20,display:"flex",flexDirection:"column",gap:12}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+            <div key={s.id} className="card" style={{padding:20, display:"flex", flexDirection:"column", gap:14, background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:12}}>
+              <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8}}>
                 <div>
-                  <div style={{fontSize:15,fontWeight:700,color:"#1e293b"}}>{s.name}</div>
-                  <div style={{fontSize:12,color:"#94a3b8",marginTop:2}}>{s.contact_person}</div>
+                  <div style={{fontSize:15, fontWeight:700, color:"var(--txt1)"}}>{s.name}</div>
+                  <div style={{fontSize:12, color:"var(--txt4)", marginTop:2}}>{s.contact_person || "—"}</div>
                 </div>
-                <span style={{background:"#f0fdf4",color:"#16a34a",fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:20}}>{s.credit_days}d credit</span>
+                <span style={{background:"rgba(16, 185, 129, 0.15)", color:"#10b981", fontSize:11, fontWeight:700, padding:"4px 10px", borderRadius:20, whiteSpace:"nowrap"}}>
+                  {s.credit_days || 0}d credit
+                </span>
               </div>
-              <div style={{fontSize:12,color:"#64748b",display:"flex",flexDirection:"column",gap:4}}>
+              
+              <div style={{fontSize:12, color:"var(--txt3)", display:"flex", flexDirection:"column", gap:6}}>
                 {s.mobile && <span>📱 {s.mobile}</span>}
                 {s.city && <span>📍 {s.city}</span>}
                 {s.gst_number && <span>🏷️ GST: {s.gst_number}</span>}
               </div>
-              <div style={{display:"flex",gap:8,paddingTop:4,borderTop:"1px solid #f1f5f9"}}>
-                <div style={{flex:1,textAlign:"center"}}>
-                  <div style={{fontSize:16,fontWeight:800,color:"#2563eb"}}>{s.total_orders||0}</div>
-                  <div style={{fontSize:10,color:"#94a3b8"}}>Orders</div>
+
+              <div style={{display:"flex", gap:8, paddingTop:10, borderTop:"1px solid var(--border)", marginTop:"auto"}}>
+                <div style={{flex:1, textAlign:"center"}}>
+                  <div style={{fontSize:16, fontWeight:800, color:"var(--primary, #2563eb)"}}>{s.total_orders||0}</div>
+                  <div style={{fontSize:10, color:"var(--txt4)"}}>Orders</div>
                 </div>
-                <div style={{flex:1,textAlign:"center"}}>
-                  <div style={{fontSize:14,fontWeight:800,color:"#10b981"}}>₹{(parseFloat(s.total_purchased||0)/1000).toFixed(1)}k</div>
-                  <div style={{fontSize:10,color:"#94a3b8"}}>Purchased</div>
+                <div style={{flex:1, textAlign:"center"}}>
+                  <div style={{fontSize:14, fontWeight:800, color:"#10b981"}}>₹{(parseFloat(s.total_purchased||0)/1000).toFixed(1)}k</div>
+                  <div style={{fontSize:10, color:"var(--txt4)"}}>Purchased</div>
                 </div>
               </div>
-              <div style={{display:"flex",gap:8}}>
-                <button onClick={()=>{setSelected(s);setForm({name:s.name,contactPerson:s.contact_person||"",mobile:s.mobile||"",email:s.email||"",gstNumber:s.gst_number||"",drugLicense:s.drug_license||"",address:s.address||"",city:s.city||"",creditDays:s.credit_days||30});setModal("edit");}}
-                  style={{flex:1,padding:"8px",background:"#eff6ff",border:"none",borderRadius:8,cursor:"pointer",color:"#2563eb",fontWeight:600,fontSize:12,fontFamily:"inherit"}}>
+
+              <div style={{display:"flex", gap:8, marginTop:4}}>
+                <button onClick={()=>{setSelected(s); setForm({name:s.name, contactPerson:s.contact_person||"", mobile:s.mobile||"", email:s.email||"", gstNumber:s.gst_number||"", drugLicense:s.drug_license||"", address:s.address||"", city:s.city||"", creditDays:s.credit_days||30}); setModal("edit");}}
+                  style={{flex:1, padding:"8px", background:"var(--border)", border:"none", borderRadius:8, cursor:"pointer", color:"var(--primary, #2563eb)", Moreton:"var(--txt1)", fontWeight:700, fontSize:12, fontFamily:"inherit"}}>
                   ✏️ Edit
                 </button>
                 <button onClick={()=>deleteSupplier(s.id)}
-                  style={{padding:"8px 12px",background:"#fef2f2",border:"none",borderRadius:8,cursor:"pointer",color:"#ef4444",fontSize:12,fontFamily:"inherit"}}>
-                  🗑
+                  style={{padding:"8px 14px", background:"rgba(239, 68, 68, 0.1)", border:"none", borderRadius:8, cursor:"pointer", color:"#ef4444", fontSize:12, fontFamily:"inherit"}}>
+                  🗑 Delete
                 </button>
               </div>
             </div>
@@ -148,35 +155,60 @@ export default function SuppliersPage() {
         </div>
       )}
 
-      {/* Purchase Orders */}
+      {/* TAB 2: Purchase Orders Table Layout */}
       {tab==="orders" && (
-        <div className="card" style={{overflow:"hidden"}}>
-          <table className="data-table">
-            <thead><tr><th>PO Number</th><th>Supplier</th><th>Invoice No.</th><th>Date</th><th>Amount</th><th>GST</th><th>Status</th></tr></thead>
+        <div className="card" style={{width:"100%", overflowX:"auto", background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:12}}>
+          <table className="data-table" style={{width:"100%", borderCollapse:"collapse", textAlign:"left"}}>
+            <thead>
+              <tr style={{background:"var(--table-head)"}}>
+                <th style={{color:"var(--txt4)", padding:"14px 20px", fontSize:12, fontWeight:700, textTransform:"uppercase"}}>PO Number</th>
+                <th style={{color:"var(--txt4)", padding:"14px 20px", fontSize:12, fontWeight:700, textTransform:"uppercase"}}>Supplier</th>
+                <th style={{color:"var(--txt4)", padding:"14px 20px", fontSize:12, fontWeight:700, textTransform:"uppercase"}}>Invoice No.</th>
+                <th style={{color:"var(--txt4)", padding:"14px 20px", fontSize:12, fontWeight:700, textTransform:"uppercase"}}>Date</th>
+                <th style={{color:"var(--txt4)", padding:"14px 20px", fontSize:12, fontWeight:700, textTransform:"uppercase"}}>Amount</th>
+                <th style={{color:"var(--txt4)", padding:"14px 20px", fontSize:12, fontWeight:700, textTransform:"uppercase"}}>GST</th>
+                <th style={{color:"var(--txt4)", padding:"14px 20px", fontSize:12, fontWeight:700, textTransform:"uppercase"}}>Status</th>
+              </tr>
+            </thead>
             <tbody>
               {orders.map(o=>(
-                <tr key={o.id}>
-                  <td><span style={{fontWeight:700,color:"#2563eb"}}>{o.po_number}</span></td>
-                  <td><div style={{fontWeight:600}}>{o.supplier_name||"—"}</div><div style={{fontSize:11,color:"#94a3b8"}}>{o.supplier_mobile}</div></td>
-                  <td style={{color:"#64748b"}}>{o.invoice_number||"—"}</td>
-                  <td style={{color:"#64748b"}}>{new Date(o.created_at).toLocaleDateString("en-IN")}</td>
-                  <td><span style={{fontWeight:700}}>₹{parseFloat(o.total_amount).toFixed(2)}</span></td>
-                  <td style={{color:"#64748b"}}>₹{parseFloat(o.gst_amount||0).toFixed(2)}</td>
-                  <td><span style={{background:o.payment_status==="paid"?"#f0fdf4":"#fffbeb",color:o.payment_status==="paid"?"#16a34a":"#d97706",padding:"3px 10px",borderRadius:20,fontSize:11,fontWeight:700,textTransform:"capitalize"}}>{o.payment_status}</span></td>
+                <tr key={o.id} style={{borderBottom:"1px solid var(--border)"}}>
+                  <td style={{padding:"14px 20px"}}><span style={{fontWeight:700, color:"var(--primary, #2563eb)"}}>{o.po_number}</span></td>
+                  <td style={{padding:"14px 20px"}}>
+                    <div style={{fontWeight:700, color:"var(--txt1)"}}>{o.supplier_name||"—"}</div>
+                    <div style={{fontSize:11, color:"var(--txt4)", marginTop:2}}>{o.supplier_mobile}</div>
+                  </td>
+                  <td style={{padding:"14px 20px", color:"var(--txt2)"}}>{o.invoice_number||"—"}</td>
+                  <td style={{padding:"14px 20px", color:"var(--txt3)"}}>{new Date(o.created_at).toLocaleDateString("en-IN")}</td>
+                  <td style={{padding:"14px 20px"}}><span style={{fontWeight:700, color:"var(--txt1)"}}>₹{parseFloat(o.total_amount).toFixed(2)}</span></td>
+                  <td style={{padding:"14px 20px", color:"var(--txt3)"}}>₹{parseFloat(o.gst_amount||0).toFixed(2)}</td>
+                  <td style={{padding:"14px 20px"}}>
+                    <span style={{
+                      background: o.payment_status==="paid"?"rgba(16, 185, 129, 0.15)":"rgba(245, 158, 11, 0.15)",
+                      color: o.payment_status==="paid"?"#10b981":"#d97706",
+                      padding:"4px 12px", borderRadius:20, fontSize:11, fontWeight:700, textTransform:"capitalize"
+                    }}>
+                      {o.payment_status}
+                    </span>
+                  </td>
                 </tr>
               ))}
-              {orders.length===0 && <tr><td colSpan={7} style={{textAlign:"center",padding:32,color:"#94a3b8"}}>No purchase orders yet</td></tr>}
+              {orders.length===0 && (
+                <tr>
+                  <td colSpan={7} style={{textAlign:"center", padding:40, color:"var(--txt4)"}}>No purchase orders found</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
       )}
 
-      {/* Add/Edit Supplier Modal */}
+      {/* MODAL: Add / Edit Supplier */}
       {(modal==="add"||modal==="edit") && (
         <div className="modal-backdrop" onClick={()=>setModal(null)}>
-          <div className="card fade-in" style={{padding:28,width:"100%",maxWidth:520,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-            <div style={{fontSize:17,fontWeight:800,color:"#1e293b",marginBottom:18}}>{modal==="add"?"➕ Add Supplier":"✏️ Edit Supplier"}</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+          <div className="card fade-in" style={{padding:28, width:"100%", maxWidth:540, maxHeight:"90vh", overflowY:"auto", background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:12}} onClick={e=>e.stopPropagation()}>
+            <div style={{fontSize:17, fontWeight:800, color:"var(--txt1)", marginBottom:20}}>{modal==="add"?"➕ Add Supplier":"✏️ Edit Supplier"}</div>
+            <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:14}}>
               {[
                 ["name","Supplier Name *","text","e.g. Mehta Pharma",true],
                 ["contactPerson","Contact Person","text","e.g. Rajesh Mehta",false],
@@ -188,75 +220,86 @@ export default function SuppliersPage() {
                 ["creditDays","Credit Days","number","30",false],
               ].map(([k,l,t,p,req])=>(
                 <div key={k}>
-                  <label style={{fontSize:12,fontWeight:700,color:"#64748b",display:"block",marginBottom:5}}>{l}</label>
-                  <input className="input" type={t} placeholder={p} required={req} value={form[k]} onChange={set(k)} />
+                  <label style={{fontSize:12, fontWeight:700, color:"var(--txt3)", display:"block", marginBottom:5}}>{l}</label>
+                  <input className="input" type={t} placeholder={p} required={req} value={form[k]} onChange={set(k)} style={{background:"var(--input-bg, var(--bg2))", color:"var(--txt1)"}} />
                 </div>
               ))}
               <div style={{gridColumn:"1/-1"}}>
-                <label style={{fontSize:12,fontWeight:700,color:"#64748b",display:"block",marginBottom:5}}>Address</label>
-                <textarea className="input" rows={2} placeholder="Full address..." value={form.address} onChange={set("address")} style={{resize:"none"}} />
+                <label style={{fontSize:12, fontWeight:700, color:"var(--txt3)", display:"block", marginBottom:5}}>Address</label>
+                <textarea className="input" rows={2} placeholder="Full address..." value={form.address} onChange={set("address")} style={{resize:"none", background:"var(--input-bg, var(--bg2))", color:"var(--txt1)"}} />
               </div>
             </div>
-            <div style={{display:"flex",gap:10,marginTop:18}}>
-              <button className="btn-primary" style={{flex:1}} onClick={saveSupplier} disabled={saving}>{saving?"Saving...":"Save Supplier"}</button>
-              <button className="btn-secondary" style={{flex:1}} onClick={()=>setModal(null)}>Cancel</button>
+            <div style={{display:"flex", gap:10, marginTop:24}}>
+              <button className="btn-primary" style={{flex:1, height:42}} onClick={saveSupplier} disabled={saving}>{saving?"Saving...":"Save Supplier"}</button>
+              <button className="btn-secondary" style={{flex:1, height:42}} onClick={()=>setModal(null)}>Cancel</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* New Purchase Order Modal */}
+      {/* MODAL: New Purchase Order Form */}
       {modal==="po" && (
         <div className="modal-backdrop" onClick={()=>setModal(null)}>
-          <div className="card fade-in" style={{padding:28,width:"100%",maxWidth:640,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
-            <div style={{fontSize:17,fontWeight:800,color:"#1e293b",marginBottom:18}}>📋 New Purchase Order</div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+          <div className="card fade-in" style={{padding:28, width:"100%", maxWidth:740, maxHeight:"90vh", overflowY:"auto", background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:12}} onClick={e=>e.stopPropagation()}>
+            <div style={{fontSize:17, fontWeight:800, color:"var(--txt1)", marginBottom:20}}>📋 New Purchase Order</div>
+            <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:20}}>
               <div>
-                <label style={{fontSize:12,fontWeight:700,color:"#64748b",display:"block",marginBottom:5}}>Supplier *</label>
-                <select className="input" value={poForm.supplierId} onChange={e=>setPoForm(f=>({...f,supplierId:e.target.value}))}>
+                <label style={{fontSize:12, fontWeight:700, color:"var(--txt3)", display:"block", marginBottom:5}}>Supplier *</label>
+                <select className="input" value={poForm.supplierId} onChange={e=>setPoForm(f=>({...f,supplierId:e.target.value}))} style={{background:"var(--input-bg, var(--bg2))", color:"var(--txt1)"}}>
                   <option value="">Select supplier...</option>
                   {suppliers.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
               <div>
-                <label style={{fontSize:12,fontWeight:700,color:"#64748b",display:"block",marginBottom:5}}>Supplier Invoice No.</label>
-                <input className="input" placeholder="INV-2024-001" value={poForm.invoiceNumber} onChange={e=>setPoForm(f=>({...f,invoiceNumber:e.target.value}))} />
+                <label style={{fontSize:12, fontWeight:700, color:"var(--txt3)", display:"block", marginBottom:5}}>Supplier Invoice No.</label>
+                <input className="input" placeholder="INV-2024-001" value={poForm.invoiceNumber} onChange={e=>setPoForm(f=>({...f,invoiceNumber:e.target.value}))} style={{background:"var(--input-bg, var(--bg2))", color:"var(--txt1)"}} />
               </div>
             </div>
-            {/* PO Items */}
-            <div style={{fontSize:13,fontWeight:700,color:"#1e293b",marginBottom:10}}>Items</div>
+
+            {/* PO Dynamic Dynamic Items Table Form */}
+            <div style={{fontSize:13, fontWeight:700, color:"var(--txt1)", marginBottom:12, borderBottom:"1px solid var(--border)", paddingBottom:6}}>Items Directory</div>
+            
+            {/* Stable header tracking row outside item rendering map loop */}
+            <div style={{display:"grid", gridTemplateColumns:"1.8fr 70px 80px 80px 90px 100px 36px", gap:8, marginBottom:6}}>
+              {["Medicine","Qty","Buy ₹","Sell ₹","Batch No.","Expiry",""].map((h,j)=>(
+                <div key={j} style={{fontSize:11, fontWeight:700, color:"var(--txt4)"}}>{h}</div>
+              ))}
+            </div>
+
             {poItems.map((item,i)=>(
-              <div key={i} style={{display:"grid",gridTemplateColumns:"2fr 70px 80px 80px 80px 80px 36px",gap:6,marginBottom:8,alignItems:"end"}}>
-                {i===0 && ["Medicine","Qty","Buy ₹","Sell ₹","Batch No.","Expiry",""].map((h,j)=>(
-                  <div key={j} style={{fontSize:10,fontWeight:700,color:"#94a3b8",marginBottom:2}}>{h}</div>
-                ))}
+              <div key={i} style={{display:"grid", gridTemplateColumns:"1.8fr 70px 80px 80px 90px 100px 36px", gap:8, marginBottom:10, alignItems:"center"}}>
                 <select className="input" value={item.medicineId} onChange={e=>{
                   const med=medicines.find(m=>m.id===e.target.value);
                   setPoItems(items=>items.map((it,idx)=>idx===i?{...it,medicineId:e.target.value,name:med?.name||""}:it));
-                }} style={{fontSize:12}}>
+                }} style={{fontSize:12, background:"var(--input-bg, var(--bg2))", color:"var(--txt1)"}}>
                   <option value="">Select...</option>
                   {medicines.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}
                 </select>
+                
                 {["quantity","purchasePrice","sellingPrice","batchNumber"].map(k=>(
                   <input key={k} className="input" type={k==="batchNumber"?"text":"number"} placeholder={k==="batchNumber"?"BN001":"0"} value={item[k]}
                     onChange={e=>setPoItems(items=>items.map((it,idx)=>idx===i?{...it,[k]:e.target.value}:it))}
-                    style={{fontSize:12}} />
+                    style={{fontSize:12, background:"var(--input-bg, var(--bg2))", color:"var(--txt1)"}} />
                 ))}
+                
                 <input className="input" type="date" value={item.expiryDate}
                   onChange={e=>setPoItems(items=>items.map((it,idx)=>idx===i?{...it,expiryDate:e.target.value}:it))}
-                  style={{fontSize:11}} />
-                {poItems.length>1 && (
+                  style={{fontSize:11, background:"var(--input-bg, var(--bg2))", color:"var(--txt1)", padding:"4px 6px"}} />
+                
+                {poItems.length>1 ? (
                   <button onClick={()=>setPoItems(items=>items.filter((_,idx)=>idx!==i))}
-                    style={{width:32,height:38,background:"#fef2f2",border:"none",borderRadius:8,cursor:"pointer",color:"#ef4444",fontSize:16}}>×</button>
-                )}
+                    style={{width:36, height:38, background:"rgba(239, 68, 68, 0.1)", border:"none", borderRadius:8, cursor:"pointer", color:"#ef4444", fontSize:18, display:"flex", alignItems:"center", justifyContent:"center"}}>×</button>
+                ) : <div />}
               </div>
             ))}
-            <button className="btn-secondary" style={{fontSize:12,marginBottom:14}} onClick={()=>setPoItems(i=>[...i,{medicineId:"",name:"",quantity:"",purchasePrice:"",sellingPrice:"",gstPercent:12,batchNumber:"",expiryDate:""}])}>
-              + Add Item
+
+            <button className="btn-secondary" style={{fontSize:12, marginBottom:20, marginTop:4, height:36}} onClick={()=>setPoItems(i=>[...i,{medicineId:"",name:"",quantity:"",purchasePrice:"",sellingPrice:"",gstPercent:12,batchNumber:"",expiryDate:""}])}>
+              ➕ Add Another Item
             </button>
-            <div style={{display:"flex",gap:10}}>
-              <button className="btn-primary" style={{flex:1}} onClick={createPO} disabled={saving}>{saving?"Creating...":"Create PO + Update Stock"}</button>
-              <button className="btn-secondary" style={{flex:1}} onClick={()=>setModal(null)}>Cancel</button>
+
+            <div style={{display:"flex", gap:10, borderTop:"1px solid var(--border)", paddingTop:16}}>
+              <button className="btn-primary" style={{flex:1, height:42}} onClick={createPO} disabled={saving}>{saving?"Creating...":"Create PO + Update Stock"}</button>
+              <button className="btn-secondary" style={{flex:1, height:42}} onClick={()=>setModal(null)}>Cancel</button>
             </div>
           </div>
         </div>
