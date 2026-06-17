@@ -1,11 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUsage } from "../context/UsageContext";
 import api from "../api/client";
 
 export default function DashboardHome() {
   const navigate = useNavigate();
-  const { usage } = useUsage();
+  
+  // 1. Consume the full usage state tracking hooks from context
+  const { usage, refreshUsage } = useUsage();
   
   // Dashboard Metrics & Records States
   const [stats, setStats] = useState({
@@ -16,39 +18,46 @@ export default function DashboardHome() {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadDashboardMetrics() {
-      try {
-        setLoading(true);
-        
-        // 1. Fetch live customer database records array length 
-        const customerRes = await api.get("/customers");
-        const customerList = customerRes.data || [];
-        const customerCount = customerList.length;
+  // 2. Wrap metrics loading inside a useCallback hook so we can trigger it cleanly
+  const loadDashboardMetrics = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch live customer database records directly
+      const customerRes = await api.get("/customers");
+      const customerList = customerRes.data || [];
+      const customerCount = customerList.length;
+      
+      // Calculate active metrics and cumulative invoices spending values
+      const calculatedRev = customerList.reduce((acc, curr) => acc + parseFloat(curr.total_spend || 0), 0);
+      const basicActiveCount = customerList.filter(c => c.is_active !== false).length;
 
-        // 2. Safely capture data attributes from the usage plan context layer
-        const planTier = usage?.planId?.toLowerCase() || "free";
-        
-        // Calculate estimated revenue metric mock or real logic based on records count
-        const calculatedRev = customerList.reduce((acc, curr) => acc + parseFloat(curr.total_spend || 0), 0);
-
-        // Filter out how many profiles need dynamic followups or are counted active
-        const basicActiveCount = customerList.filter(c => c.is_active !== false).length;
-
-        setStats({
-          totalCustomers: customerCount,
-          active30d: basicActiveCount,
-          refillsDue: Math.ceil(customerCount * 0.15), // Mock count fallback metric for your UI card row
-          estRevenue: calculatedRev || (customerCount * 1250) // Fallback generator data simulation
-        });
-      } catch (err) {
-        console.error("Failed to sync live analytics parameters safely:", err);
-      } finally {
-        setLoading(false);
-      }
+      setStats({
+        totalCustomers: customerCount,
+        active30d: basicActiveCount,
+        refillsDue: Math.ceil(customerCount * 0.15), // Metrics strategy calculations tracking fallback
+        estRevenue: calculatedRev || (customerCount * 1250)
+      });
+    } catch (err) {
+      console.error("Failed to sync live dashboard analytics parameters safely:", err);
+    } finally {
+      setLoading(false);
     }
+  }, []);
+
+  // 3. Auto-trigger statistics calculation sync whenever the plan usage context alters
+  useEffect(() => {
     loadDashboardMetrics();
-  }, [usage]);
+  }, [usage?.planId, usage?.planExpiresAt, loadDashboardMetrics]);
+
+  // 4. Fallback check: Always query underlying configurations when window refocuses 
+  useEffect(() => {
+    const handleWindowFocus = () => {
+      if (refreshUsage) refreshUsage();
+    };
+    window.addEventListener("focus", handleWindowFocus);
+    return () => window.removeEventListener("focus", handleWindowFocus);
+  }, [refreshUsage]);
 
   if (loading) {
     return (
@@ -58,7 +67,7 @@ export default function DashboardHome() {
     );
   }
 
-  // Determine current active limit metrics for visual warnings
+  // Determine current active limit metrics for visual warnings dynamically
   const planTier = usage?.planId?.toLowerCase() || "free";
   const customerLimit = planTier === "premium" ? "Unlimited" : planTier === "basic" ? 500 : 25;
   const showLimitWarning = planTier === "free" && stats.totalCustomers >= 20;
@@ -66,11 +75,11 @@ export default function DashboardHome() {
   return (
     <div className="fade-in" style={{ display: "flex", flexDirection: "column", gap: 24, width: "100%", boxSizing: "border-box" }}>
       
-      {/* ── CRITICAL TIER CAPACITY BANNER INDICATOR ── */}
+      {/* ── TIER CAPACITY BANNER INDICATOR ── */}
       {showLimitWarning && (
         <div style={{ padding: "16px 20px", background: "rgba(245, 158, 11, 0.15)", border: "1px solid #f59e0b", borderRadius: 12, color: "#f59e0b", fontSize: 13, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <strong>⚠️ Capacity Alert:</strong> Your pharmacy has registered <strong>{stats.totalCustomers} / 25</strong> customer slots allocated under the Free Trial tier wrapper.
+            <strong>⚠️ Capacity Alert:</strong> Your pharmacy has registered <strong>{stats.totalCustomers} / 25</strong> customer slots allocated under the Free Trial tier.
           </div>
           <button onClick={() => navigate("/pricing")} style={{ padding: "6px 14px", background: "#f59e0b", color: "#111827", border: "none", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
             Upgrade Now
@@ -120,7 +129,7 @@ export default function DashboardHome() {
         </div>
       </div>
 
-      {/* ── LOWER CONTENT AREA HERO DISPLAY CONTROLLER ── */}
+      {/* ── LOWER CONTENT SPLIT AREA VIEWPORT ── */}
       {stats.totalCustomers === 0 ? (
         <div className="card" style={{ padding: 48, background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 12, textAlign: "center", width: "100%", boxSizing: "border-box" }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🏥</div>
@@ -133,7 +142,7 @@ export default function DashboardHome() {
           </button>
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 20, width: "100%" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20, width: "100%" }}>
           {/* Quick Shortcuts Box */}
           <div className="card" style={{ padding: 24, background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 12 }}>
             <h4 style={{ fontSize: 15, fontWeight: 700, color: "var(--txt1)", margin: "0 0 16px" }}>Core Modules Shortcuts</h4>
