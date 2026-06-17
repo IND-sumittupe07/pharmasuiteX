@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { useUsage } from "../context/UsageContext"; // 1. Import this
 
 const PLANS = [
   { id:"basic",   name:"Basic",   price:"₹299", color:"#2563eb", bg:"#eff6ff", features:["500 customers","Unlimited invoices","200 SMS/month","CSV Export","Auto reminders"] },
@@ -9,6 +10,7 @@ const PLANS = [
 
 export default function PlanExpiredPage({ plan, daysLeft, onRenewed }) {
   const { logout } = useAuth();
+  const { refreshUsage } = useUsage(); // 2. Get refreshUsage from context
   const [paying, setPaying]   = useState(null);
   const [toast, setToast]     = useState(null);
   const isExpired = daysLeft <= 0;
@@ -47,9 +49,18 @@ export default function PlanExpiredPage({ plan, daysLeft, onRenewed }) {
               razorpay_signature: response.razorpay_signature,
               planId,
             });
+            
             showToast(verifyRes.data.message);
-            setTimeout(() => { if (onRenewed) onRenewed(); else window.location.reload(); }, 2000);
-          } catch(e) { showToast("Payment verification failed","error"); }
+            
+            // 3. FORCE UPDATE: This pulls the new plan data from your DB immediately
+            await refreshUsage(); 
+            
+            setTimeout(() => { 
+              if (onRenewed) onRenewed(); 
+              else window.location.reload(); 
+            }, 2000);
+
+          } catch(e) { showToast("Payment verification failed","error"); setPaying(null); }
         },
         modal: { ondismiss: () => setPaying(null) },
       };
@@ -58,14 +69,13 @@ export default function PlanExpiredPage({ plan, daysLeft, onRenewed }) {
       rzp.open();
     } catch(e) {
       const msg = e.response?.data?.error || "Failed";
-      if (msg.includes("not configured")) {
-        showToast("Razorpay not configured yet. Contact support.","error");
-      } else { showToast(msg,"error"); }
+      showToast(msg.includes("not configured") ? "Razorpay not configured" : msg, "error");
       setPaying(null);
     }
   };
 
   return (
+    // ... (rest of your component JSX remains exactly the same)
     <div style={{ minHeight:"100vh", background:"linear-gradient(135deg,#0f172a,#1e1b4b)", display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
       {toast && (
         <div style={{ position:"fixed", top:20, right:24, zIndex:100, padding:"14px 20px", borderRadius:12,
@@ -78,10 +88,7 @@ export default function PlanExpiredPage({ plan, daysLeft, onRenewed }) {
       )}
 
       <div style={{ width:"100%", maxWidth:760, textAlign:"center" }}>
-        {/* Icon */}
         <div style={{ fontSize:64, marginBottom:16 }}>{isExpired ? "⏰" : "⚠️"}</div>
-
-        {/* Title */}
         <div style={{ fontSize:32, fontWeight:900, color:"white", marginBottom:8 }}>
           {isExpired ? "Your Plan Has Expired" : `Plan Expiring in ${daysLeft} Days`}
         </div>
@@ -91,7 +98,6 @@ export default function PlanExpiredPage({ plan, daysLeft, onRenewed }) {
             : `Your ${plan === "free" ? "Free Trial" : plan} plan expires soon. Upgrade to keep all your data and features.`}
         </div>
 
-        {/* Plan cards */}
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:24 }}>
           {PLANS.map(p => (
             <div key={p.id} style={{
@@ -124,7 +130,6 @@ export default function PlanExpiredPage({ plan, daysLeft, onRenewed }) {
           ))}
         </div>
 
-        {/* Free trial option if not expired */}
         {!isExpired && plan === "free" && (
           <div style={{ padding:"14px 20px", background:"rgba(255,255,255,0.05)", borderRadius:12, marginBottom:16, fontSize:13, color:"#94a3b8" }}>
             💡 You are on a free trial. Upgrade before it expires to keep your data.
