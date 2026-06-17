@@ -1,99 +1,28 @@
-import { useState, useEffect, useCallback } from "react";
-import api from "../api/client";
+const express = require("express");
+const { query } = require("../db/db");
+const { authenticate } = require("../middleware/auth");
+const router = express.Router();
+router.use(authenticate);
 
-const emptyForm = { name:"", contactPerson:"", mobile:"", email:"", gstNumber:"", drugLicense:"", address:"", city:"", creditDays:30 };
+// ... keep your existing routes (GET /suppliers, POST /purchase-orders, etc.)
 
-export default function SuppliersPage() {
-  const [suppliers, setSuppliers] = useState([]);
-  const [orders, setOrders]       = useState([]);
-  const [tab, setTab]             = useState("suppliers");
-  const [modal, setModal]         = useState(null);
-  const [selected, setSelected]   = useState(null);
-  const [form, setForm]           = useState(emptyForm);
-  const [saving, setSaving]       = useState(false);
-  const [toast, setToast]         = useState(null);
-  const [medicines, setMedicines] = useState([]);
+// Add this status toggle route at the very end of the file
+router.put("/purchase-orders/:id/status", async (req, res) => {
+  const { pharmacyId } = req.user;
+  const { status } = req.body;
+  const { id } = req.params;
 
-  const [poForm, setPoForm]       = useState({ supplierId:"", invoiceNumber:"", invoiceDate:"", notes:"" });
-  const [poItems, setPoItems]     = useState([{medicineId:"",name:"",quantity:"",purchasePrice:"",sellingPrice:"",batchNumber:"",expiryDate:""}]);
+  try {
+    const result = await query(
+      "UPDATE purchase_orders SET payment_status = $1 WHERE id = $2 AND pharmacy_id = $3 RETURNING *",
+      [status, id, pharmacyId]
+    );
 
-  const showToast = (msg, type="success") => { setToast({msg,type}); setTimeout(()=>setToast(null),3500); };
+    if (result.rowCount === 0) return res.status(404).json({ error: "Order not found" });
+    res.json({ success: true, order: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update status" });
+  }
+});
 
-  const load = useCallback(() => {
-    Promise.all([
-      api.get("/suppliers"),
-      api.get("/suppliers/purchase-orders"),
-      api.get("/medicines"),
-    ]).then(([s, po, m]) => { setSuppliers(s.data || []); setOrders(po.data || []); setMedicines(m.data || []); });
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
-
-  const togglePOStatus = async (id, currentStatus) => {
-    const newStatus = currentStatus === "completed" ? "pending" : "completed";
-    try {
-      await api.put(`/suppliers/purchase-orders/${id}/status`, { status: newStatus });
-      showToast(`✅ Status updated to ${newStatus}`);
-      load();
-    } catch(e) { showToast("Failed to update status", "error"); }
-  };
-
-  const saveSupplier = async () => {
-    if (!form.name) { showToast("Supplier name required","error"); return; }
-    setSaving(true);
-    try {
-      if (modal === "edit") await api.put(`/suppliers/${selected.id}`, form);
-      else await api.post("/suppliers", form);
-      showToast("✅ Supplier saved!");
-      setModal(null); load();
-    } catch(e) { showToast("Failed","error"); }
-    finally { setSaving(false); }
-  };
-
-  const createPO = async () => {
-    if (!poForm.supplierId || poItems.some(i=>!i.quantity)) {
-      showToast("Fill required fields","error"); return;
-    }
-    setSaving(true);
-    try {
-      await api.post("/suppliers/purchase-orders", { ...poForm, items: poItems });
-      showToast("✅ PO Created!");
-      setModal(null); load();
-    } catch(e) { showToast("Failed","error"); }
-    finally { setSaving(false); }
-  };
-
-  return (
-    <div className="fade-in" style={{display:"flex", flexDirection:"column", gap:20, width:"100%"}}>
-      {toast && <div style={{position:"fixed",top:20,right:24,background:toast.type==="error"?"#fecaca":"#dcfce7",padding:15,borderRadius:8}}>{toast.msg}</div>}
-
-      <div style={{display:"flex", gap:10}}>
-        <button onClick={()=>setTab("suppliers")}>Suppliers</button>
-        <button onClick={()=>setTab("orders")}>Orders</button>
-        <button onClick={()=>setModal("po")}>+ New PO</button>
-      </div>
-
-      {tab === "orders" && (
-        <div className="card" style={{overflowX:"auto"}}>
-          <table style={{width:"100%"}}>
-            <thead><tr><th>PO Number</th><th>Supplier</th><th>Status</th></tr></thead>
-            <tbody>
-              {orders.map(o => (
-                <tr key={o.id}>
-                  <td>{o.po_number}</td>
-                  <td>{o.supplier_name}</td>
-                  <td>
-                    <button onClick={() => togglePOStatus(o.id, o.payment_status)}
-                      style={{background: o.payment_status==="completed" ? "#dcfce7" : "#fef3c7", border:"none", padding:"5px 10px", borderRadius:15, cursor:"pointer"}}>
-                      {o.payment_status==="completed" ? "✅ Completed" : "⏳ Pending"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
+module.exports = router;
