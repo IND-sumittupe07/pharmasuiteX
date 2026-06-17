@@ -43,12 +43,12 @@ export default function Dashboard() {
   );
 
   const planColors = { free: "#64748b", basic: "#2563eb", premium: "#7c3aed", enterprise: "#059669" };
-  const planColor = planColors[usage?.planId] || "#64748b";
+  const planColor = planColors[usage?.planId?.toLowerCase()] || "#64748b";
 
   return (
     <div style={{ display: "flex", height: "100vh", width: "100vw", overflow: "hidden", fontFamily: "'Outfit',sans-serif", backgroundColor: "var(--bg1)", color: "var(--txt1)" }}>
 
-      {/* Sidebar Container */}
+      {/* Sidebar Navigation Frame Container */}
       <div style={{ width: sidebarOpen ? 240 : 64, minWidth: sidebarOpen ? 240 : 64, height: "100vh", background: "var(--bg2)", borderRight: "1px solid var(--border)", display: "flex", flexDirection: "column", transition: "all 0.2s ease", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "20px 16px", borderBottom: "1px solid var(--border)", height: 76, boxSizing: "border-box" }}>
           <div className="ring" style={{ width: 36, height: 36, background: "linear-gradient(135deg,#2563eb,#1d4ed8)", flexShrink: 0, fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}>💊</div>
@@ -75,20 +75,38 @@ export default function Dashboard() {
           })}
         </nav>
 
-        {/* Usage section layout safety wrapper */}
+        {/* Dynamic Plan-Aware Usage Panel */}
         {sidebarOpen && usage?.usage && (
           <div style={{ margin: "0 8px 8px", padding: "12px 14px", background: "var(--bg3)", borderRadius: 12, border: "1px solid var(--border)", flexShrink: 0 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: "var(--txt4)", marginBottom: 8, textTransform: "uppercase" }}>Usage</div>
             {Object.entries(usage.usage || {}).slice(0, 2).map(([key, val]) => {
-              const isInf = val.limit === Infinity || val.limit === -1 || val.limit === null;
-              const p = isInf ? 0 : Math.min(100, Math.round((val.current / val.limit) * 100));
+              const planTier = usage?.planId?.toLowerCase() || "free";
+              
+              // Map explicit max caps matching your subscription matrices documentation
+              let activeLimit = val.limit;
+              if (key === "customers") {
+                activeLimit = planTier === "premium" ? "∞" : planTier === "basic" ? 500 : 25;
+              } else if (key === "campaigns") {
+                activeLimit = planTier === "premium" ? "∞" : planTier === "basic" ? 10 : 2;
+              }
+
+              const isInf = activeLimit === "∞" || activeLimit === -1;
+              const usedCount = parseInt(val.current) || 0;
+              const p = isInf ? 0 : Math.min(100, Math.round((usedCount / activeLimit) * 100));
+
               return (
                 <div key={key} style={{ marginBottom: 8 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
                     <span style={{ fontSize: 11, color: "var(--txt2)" }}>{val.label}</span>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: p >= 80 ? "#ef4444" : "var(--txt2)" }}>{val.current}/{isInf ? "∞" : val.limit}</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: p >= 85 ? "#ef4444" : "var(--txt2)" }}>
+                      {usedCount}/{activeLimit}
+                    </span>
                   </div>
-                  {!isInf && <div style={{ height: 4, background: "var(--bg4)", borderRadius: 2, overflow: "hidden" }}><div style={{ height: "100%", width: `${p}%`, background: p >= 80 ? "#ef4444" : "#2563eb", borderRadius: 2 }}></div></div>}
+                  {!isInf && (
+                    <div style={{ height: 4, background: "var(--bg4)", borderRadius: 2, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${p}%`, background: p >= 85 ? "#ef4444" : "var(--primary, #2563eb)", borderRadius: 2 }}></div>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -102,7 +120,7 @@ export default function Dashboard() {
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px" }}>
             <div className="ring" style={{ width: 32, height: 32, background: "linear-gradient(135deg,#10b981,#059669)", flexShrink: 0, fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>🏪</div>
             {sidebarOpen && <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--txt1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user?.pharmacyName}</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--txt1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user?.pharmacyName || user?.pharmacy_name}</div>
               <div style={{ fontSize: 11, color: planColor, fontWeight: 600, textTransform: "uppercase" }}>● {usage?.planName || user?.plan || "free"}</div>
             </div>}
           </div>
@@ -110,7 +128,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Main Container Viewport */}
+      {/* Main Container Viewport Section */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", height: "100vh" }}>
         <div style={{ background: "var(--bg2)", borderBottom: "1px solid var(--border)", padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, height: 76, boxSizing: "border-box" }}>
           <div>
@@ -123,12 +141,12 @@ export default function Dashboard() {
                 💎 {usage.planName}
               </div>
             )}
-            {usage && ["free", "basic"].includes(usage.planId) && (
+            {usage && ["free", "basic"].includes(usage.planId?.toLowerCase()) && (
               <button onClick={() => navigate("/pricing")} style={{ padding: "9px 16px", background: "linear-gradient(135deg,#7c3aed,#2563eb)", color: "white", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
                 ⚡ Upgrade
               </button>
             )}
-            <button className="btn-primary" style={{ fontSize: 13, padding: "9px 16px" }} onClick={() => navigate("/customers/new")}>+ Add Customer</button>
+            <button className="btn-primary" style={{ fontSize: 13, padding: "9px 16px" }} onClick={() => navigate("/customers")}>+ View Customers</button>
           </div>
         </div>
 
