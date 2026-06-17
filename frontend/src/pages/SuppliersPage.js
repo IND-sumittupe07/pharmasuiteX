@@ -25,50 +25,46 @@ export default function SuppliersPage() {
     const next = current === "completed" ? "pending" : "completed";
     try {
       await api.put(`/api/suppliers/purchase-orders/${id}/status`, { status: next });
-      loadData();
+      loadData(); // Refresh list to show new color/text
     } catch (err) {
       alert("Failed to update status");
     }
   };
 
   return (
-    <div style={{ padding: "20px", maxWidth: "1000px", margin: "0 auto", fontFamily: "sans-serif" }}>
-      {/* Header & Navigation */}
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "20px" }}>
+    <div style={{ padding: "40px 20px", maxWidth: "1000px", margin: "0 auto", fontFamily: "sans-serif" }}>
+      {/* Header Bar */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px" }}>
         <div>
-          <button onClick={() => setTab("suppliers")} style={{ padding: "10px 20px" }}>Suppliers</button>
-          <button onClick={() => setTab("orders")} style={{ padding: "10px 20px", marginLeft: "10px" }}>Orders</button>
+          <button onClick={() => setTab("suppliers")} style={{ padding: "10px 20px", cursor: "pointer", background: tab === "suppliers" ? "#e0e7ff" : "#f3f4f6", border: "none", borderRadius: "6px" }}>Suppliers</button>
+          <button onClick={() => setTab("orders")} style={{ padding: "10px 20px", marginLeft: "10px", cursor: "pointer", background: tab === "orders" ? "#e0e7ff" : "#f3f4f6", border: "none", borderRadius: "6px" }}>Orders</button>
         </div>
-        <button onClick={() => alert("Open New PO Modal")} style={{ padding: "10px 20px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "5px" }}>+ New PO</button>
+        <button onClick={() => alert("Open New PO Modal")} style={{ padding: "10px 20px", background: "#2563eb", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer" }}>+ New PO</button>
       </div>
 
-      {/* Content */}
-      <div style={{ background: "#fff", border: "1px solid #ddd", borderRadius: "8px", overflow: "hidden" }}>
-        {tab === "suppliers" ? (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead><tr style={{ background: "#f8f9fa" }}><th style={{ padding: "15px", textAlign: "left" }}>Supplier Name</th></tr></thead>
-            <tbody>{suppliers.map(s => <tr key={s.id} style={{ borderTop: "1px solid #eee" }}><td style={{ padding: "15px" }}>{s.name}</td></tr>)}</tbody>
-          </table>
-        ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ background: "#f8f9fa" }}>
-                <th style={{ padding: "15px", textAlign: "left" }}>PO Number</th>
-                <th style={{ padding: "15px", textAlign: "left" }}>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map(o => (
-                <tr key={o.id} style={{ borderTop: "1px solid #eee" }}>
+      {/* Main Table Area */}
+      <div style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: "10px", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ background: "#f9fafb", textAlign: "left" }}>
+              {tab === "suppliers" ? 
+                <th style={{ padding: "15px" }}>Supplier Name</th> : 
+                <><th style={{ padding: "15px" }}>PO Number</th><th style={{ padding: "15px" }}>Status</th></>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            {tab === "suppliers" ? (
+              suppliers.map(s => <tr key={s.id} style={{ borderTop: "1px solid #f3f4f6" }}><td style={{ padding: "15px" }}>{s.name}</td></tr>)
+            ) : (
+              orders.map(o => (
+                <tr key={o.id} style={{ borderTop: "1px solid #f3f4f6" }}>
                   <td style={{ padding: "15px" }}>{o.po_number}</td>
                   <td style={{ padding: "15px" }}>
                     <button 
                       onClick={() => toggle(o.id, o.payment_status)}
                       style={{
-                        padding: "6px 12px", 
-                        borderRadius: "20px", 
-                        border: "none", 
-                        cursor: "pointer",
+                        padding: "8px 16px", borderRadius: "20px", border: "none", cursor: "pointer", fontWeight: "600", fontSize: "12px",
                         background: o.payment_status === "completed" ? "#dcfce7" : "#fef3c7",
                         color: o.payment_status === "completed" ? "#166534" : "#92400e"
                       }}>
@@ -76,10 +72,10 @@ export default function SuppliersPage() {
                     </button>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );
