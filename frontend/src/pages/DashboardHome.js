@@ -102,7 +102,7 @@ export default function DashboardHome() {
         </div>
 
         {/* Refills Pending Card */}
-        <div className="card" onClick={() => navigate("/expiry")} style={{ padding: 20, background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 12, position: "relative", cursor: "pointer" }}>
+        <div className="card" onClick={() => navigate("/reminders")} style={{ padding: 20, background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 12, position: "relative", cursor: "pointer" }}>
           <div style={{ fontSize: 28, fontWeight: 900, color: "#ef4444" }}>{stats.refillsDue}</div>
           <div style={{ fontSize: 13, color: "var(--txt3)", marginTop: 4 }}>Refills Due</div>
           <span style={{ position: "absolute", right: 20, top: 20, fontSize: 20, opacity: 0.6 }}>🔔</span>
