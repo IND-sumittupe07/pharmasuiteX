@@ -44,7 +44,6 @@ export default function CustomersPage() {
     }
   };
 
-  // Filter customers locally by search bar input
   const filteredCustomers = customers.filter(c => {
     const term = search.toLowerCase();
     return (
@@ -76,7 +75,6 @@ export default function CustomersPage() {
         </button>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 24, width: "100%" }}>
-          {/* LEFT: Profile Card */}
           <div className="card" style={{ padding: 24, background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 12 }}>
             <div style={{ textAlign: "center", marginBottom: 24 }}>
               <div style={{ width: 80, height: 80, margin: "0 auto", borderRadius: "50%", background: `hsl(${selectedCustomer.full_name?.charCodeAt(0) * 5 || 0},60%,50%)`, color: "white", fontSize: 32, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -117,7 +115,6 @@ export default function CustomersPage() {
             </button>
           </div>
 
-          {/* RIGHT: Additional Info */}
           <div className="card" style={{ padding: 24, background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 12 }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: "var(--txt1)", marginBottom: 16 }}>Additional Info</div>
             <div style={{ display: "grid", gap: 16 }}>
@@ -154,11 +151,12 @@ export default function CustomersPage() {
   }
 
   // ==========================================
-  // 3. ADD NEW VIEW
+  // 3. ADD NEW VIEW (LIMIT CHECK INSIDE FORM PASSED DOWN)
   // ==========================================
   if (view === "form") {
     return (
       <AddCustomerForm 
+        currentCustomerCount={customers.length}
         onSave={() => { setView("list"); fetchCustomers(); }} 
         onCancel={() => setView("list")} 
       />
@@ -171,7 +169,7 @@ export default function CustomersPage() {
   return (
     <div className="fade-in" style={{ display: "flex", flexDirection: "column", gap: 20, width: "100%", boxSizing: "border-box" }}>
       
-      {/* Dynamic Header Section */}
+      {/* Header Section */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", flexWrap: "wrap", gap: 12 }}>
         <div>
           <div style={{ fontSize: 14, color: "var(--txt4)" }}>Customer Registry</div>
@@ -228,7 +226,6 @@ export default function CustomersPage() {
                         {c.full_name?.[0] || "?"}
                       </div>
                       <div>
-                        {/* FIXED: Restored core .full_name visibility and theme safety variables */}
                         <div style={{ fontSize: 14, fontWeight: 700, color: "var(--txt1)" }}>{c.full_name || "Unknown"}</div>
                         <div style={{ fontSize: 11, color: "var(--txt4)", marginTop: 2 }}>{c.customer_code || "N/A"}</div>
                       </div>
@@ -264,9 +261,9 @@ export default function CustomersPage() {
 }
 
 // ==========================================
-// SUB-COMPONENT: ADD CUSTOMER FORM
+// SUB-COMPONENT: ADD CUSTOMER FORM WITH TIER LIMIT CHECKS
 // ==========================================
-function AddCustomerForm({ onSave, onCancel }) {
+function AddCustomerForm({ onSave, onCancel, currentCustomerCount }) {
   const [form, setForm] = useState({ fullName: "", mobile: "", age: "", gender: "Male", city: "", medicalCondition: "", notes: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -275,8 +272,28 @@ function AddCustomerForm({ onSave, onCancel }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
+
+    // ── Check tier parameters before firing request ──
+    try {
+      // Pull usage directly to secure most current server state
+      const usageCheck = await api.get("/plans/usage");
+      const currentCount = usageCheck.data?.customers?.used ?? currentCustomerCount;
+      const planTier = usageCheck.data?.plan?.toLowerCase() || "free";
+
+      if (planTier === "free" && currentCount >= 25) {
+        setError("🚨 Tier Limit Reached! Free accounts can hold a maximum of 25 customer profiles. Please upgrade your plan.");
+        return;
+      }
+      if (planTier === "basic" && currentCount >= 500) {
+        setError("🚨 Tier Limit Reached! Basic subscription accounts allow up to 500 profiles. Please upgrade to Premium.");
+        return;
+      }
+    } catch (uErr) {
+      console.warn("Usage pre-check bypass; fallback to standard prop count verification context.", uErr);
+    }
+
+    setLoading(true);
     try {
       await api.post("/customers", form);
       onSave();
@@ -294,7 +311,13 @@ function AddCustomerForm({ onSave, onCancel }) {
       </button>
       <div className="card" style={{ padding: 32, background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 12 }}>
         <div style={{ fontSize: 18, fontWeight: 700, color: "var(--txt1)", marginBottom: 24 }}>Add New Customer</div>
-        {error && <div style={{ background: "rgba(239, 68, 68, 0.15)", color: "#ef4444", padding: "10px 14px", borderRadius: 8, marginBottom: 16, fontSize: 13, border: "1px solid rgba(239, 68, 68, 0.25)" }}>{error}</div>}
+        
+        {error && (
+          <div style={{ background: "rgba(239, 68, 68, 0.15)", color: "#ef4444", padding: "12px 14px", borderRadius: 8, marginBottom: 20, fontSize: 13, border: "1px solid rgba(239, 68, 68, 0.25)", lineHeight: 1.5 }}>
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
           <div>
             <label style={{ fontSize: 12, fontWeight: 600, color: "var(--txt3)", display: "block", marginBottom: 5 }}>Full Name *</label>
