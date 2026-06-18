@@ -12,7 +12,7 @@ export default function DashboardHome() {
 
   const now = new Date();
   const expiresAt = user?.plan_expires_at ? new Date(user.plan_expires_at) : null;
-  const daysLeft  = expiresAt ? Math.ceil((expiresAt - now) / (1000*60*60*24)) : 99;
+  const daysLeft = expiresAt ? Math.ceil((expiresAt - now) / (1000 * 60 * 60 * 24)) : 99;
 
   useEffect(() => {
     api.get("/analytics/dashboard")
@@ -38,24 +38,24 @@ export default function DashboardHome() {
 
       {/* Plan expiry alert */}
       {daysLeft <= 7 && daysLeft > 0 && (
-        <div style={{ padding:"14px 20px", background:daysLeft<=3?"#fef2f2":"#fffbeb",
-          border:`1px solid ${daysLeft<=3?"#fca5a5":"#fde68a"}`,
-          borderRadius:12, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+        <div style={{ padding: "14px 20px", background: daysLeft <= 3 ? "#fef2f2" : "#fffbeb",
+          border: `1px solid ${daysLeft <= 3 ? "#fca5a5" : "#fde68a"}`,
+          borderRadius: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <div style={{ fontSize:14, fontWeight:700, color:daysLeft<=3?"#dc2626":"#92400e" }}>
-              {daysLeft<=3?"🚨":"⚠️"} Your {user?.plan === "free" ? "Free Trial" : user?.plan + " plan"} expires in {daysLeft} day{daysLeft!==1?"s":""}!
+            <div style={{ fontSize: 14, fontWeight: 700, color: daysLeft <= 3 ? "#dc2626" : "#92400e" }}>
+              {daysLeft <= 3 ? "🚨" : "⚠️"} Your {user?.plan === "free" ? "Free Trial" : user?.plan + " plan"} expires in {daysLeft} day{daysLeft !== 1 ? "s" : ""}!
             </div>
-            <div style={{ fontSize:12, color:"#64748b", marginTop:2 }}>Upgrade now to avoid interruption to your pharmacy operations.</div>
+            <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Upgrade now to avoid interruption to your pharmacy operations.</div>
           </div>
-          <button onClick={()=>navigate("/pricing")}
-            style={{ padding:"9px 18px", background:"linear-gradient(135deg,#2563eb,#7c3aed)", color:"white",
-              border:"none", borderRadius:10, fontWeight:700, fontSize:13, cursor:"pointer", fontFamily:"inherit",
-              boxShadow:"0 4px 12px rgba(37,99,235,0.35)", whiteSpace:"nowrap" }}>
+          <button onClick={() => navigate("/pricing")}
+            style={{ padding: "9px 18px", background: "linear-gradient(135deg,#2563eb,#7c3aed)", color: "white",
+              border: "none", borderRadius: 10, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit",
+              boxShadow: "0 4px 12px rgba(37,99,235,0.35)", whiteSpace: "nowrap" }}>
             Upgrade Now →
           </button>
         </div>
       )}
-      
+
       {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16 }}>
         {stats.map((s, i) => (
@@ -96,7 +96,7 @@ export default function DashboardHome() {
           {(data.conditionMix || []).map((c, i) => {
             const total = data.conditionMix.reduce((a, x) => a + parseInt(x.count), 0);
             const pct = Math.round((c.count / total) * 100);
-            const colors = ["#3b82f6","#ef4444","#8b5cf6","#06b6d4","#f59e0b","#10b981"];
+            const colors = ["#3b82f6", "#ef4444", "#8b5cf6", "#06b6d4", "#f59e0b", "#10b981"];
             return (
               <div key={i} style={{ marginBottom: 12 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
@@ -112,7 +112,7 @@ export default function DashboardHome() {
         </div>
       </div>
 
-      {/* Top Medicines (Full width now, as the second column was removed) */}
+      {/* Top Medicines */}
       <div className="card" style={{ padding: 24 }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>💊 Top Medicines</div>
         {(data.topMedicines || []).map((m, i) => (
