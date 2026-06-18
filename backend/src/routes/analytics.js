@@ -13,7 +13,7 @@ const authenticate = (req, res, next) => {
 };
 
 // GET /api/analytics/dashboard
-router.get("/dashboard", authenticate, async (req, res) => {
+router.get("/", authenticate, async (req, res) => {
   const { pharmacyId } = req.user;
 
   try {
