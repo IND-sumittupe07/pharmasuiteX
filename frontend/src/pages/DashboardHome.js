@@ -1,183 +1,131 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useUsage } from "../context/UsageContext";
 import api from "../api/client";
+import { useAuth } from "../context/AuthContext";
 
 export default function DashboardHome() {
+  const { user } = useAuth();
   const navigate = useNavigate();
-  
-  // 1. Consume the full usage state tracking hooks from context
-  const { usage, refreshUsage } = useUsage();
-  
-  // Dashboard Metrics & Records States
-  const [stats, setStats] = useState({
-    totalCustomers: 0,
-    active30d: 0,
-    refillsDue: 0,
-    estRevenue: 0,
-  });
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // 2. Wrap metrics loading inside a useCallback hook so we can trigger it cleanly
-  const loadDashboardMetrics = useCallback(async () => {
-    try {
-      setLoading(true);
-      
-      // Fetch live customer database records directly
-      const customerRes = await api.get("/customers");
-      const customerList = customerRes.data || [];
-      const customerCount = customerList.length;
-      
-      // Calculate active metrics and cumulative invoices spending values
-      const calculatedRev = customerList.reduce((acc, curr) => acc + parseFloat(curr.total_spend || 0), 0);
-      const basicActiveCount = customerList.filter(c => c.is_active !== false).length;
+  const now = new Date();
+  const expiresAt = user?.plan_expires_at ? new Date(user.plan_expires_at) : null;
+  const daysLeft  = expiresAt ? Math.ceil((expiresAt - now) / (1000*60*60*24)) : 99;
 
-      setStats({
-        totalCustomers: customerCount,
-        active30d: basicActiveCount,
-        refillsDue: Math.ceil(customerCount * 0.15), // Metrics strategy calculations tracking fallback
-        estRevenue: calculatedRev || (customerCount * 1250)
-      });
-    } catch (err) {
-      console.error("Failed to sync live dashboard analytics parameters safely:", err);
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    api.get("/analytics/dashboard")
+      .then(res => setData(res.data))
+      .catch(() => setError("Failed to load dashboard"))
+      .finally(() => setLoading(false));
   }, []);
 
-  // 3. Auto-trigger statistics calculation sync whenever the plan usage context alters
-  useEffect(() => {
-    loadDashboardMetrics();
-  }, [usage?.planId, usage?.planExpiresAt, loadDashboardMetrics]);
+  if (loading) return <div style={{ textAlign: "center", padding: 60, color: "#94a3b8" }}>Loading dashboard...</div>;
+  if (error) return <div style={{ textAlign: "center", padding: 60, color: "#ef4444" }}>{error}</div>;
 
-  // 4. Fallback check: Always query underlying configurations when window refocuses 
-  useEffect(() => {
-    const handleWindowFocus = () => {
-      if (refreshUsage) refreshUsage();
-    };
-    window.addEventListener("focus", handleWindowFocus);
-    return () => window.removeEventListener("focus", handleWindowFocus);
-  }, [refreshUsage]);
+  const stats = [
+    { label: "Total Customers", value: data.totalCustomers, icon: "👥", color: "#2563eb", bg: "linear-gradient(135deg,#eff6ff,#dbeafe)" },
+    { label: "Active (30d)", value: data.activeCustomers, icon: "✅", color: "#10b981", bg: "linear-gradient(135deg,#f0fdf4,#bbf7d0)" },
+    { label: "Refills Due", value: data.refillsDue, icon: "🔔", color: "#ef4444", bg: "linear-gradient(135deg,#fef2f2,#fecaca)" },
+    { label: "Est. Revenue", value: `₹${(data.totalRevenue / 1000).toFixed(1)}k`, icon: "💰", color: "#f59e0b", bg: "linear-gradient(135deg,#fffbeb,#fde68a)" },
+  ];
 
-  if (loading) {
-    return (
-      <div style={{ width: "100%", padding: 40, boxSizing: "border-box" }}>
-        <div style={{ textAlign: "center", padding: 40, color: "var(--txt4)" }}>Loading configuration analytics...</div>
-      </div>
-    );
-  }
-
-  // Determine current active limit metrics for visual warnings dynamically
-  const planTier = usage?.planId?.toLowerCase() || "free";
-  const customerLimit = planTier === "premium" ? "Unlimited" : planTier === "basic" ? 500 : 25;
-  const showLimitWarning = planTier === "free" && stats.totalCustomers >= 20;
+  const maxGrowth = Math.max(...(data.monthlyGrowth || []).map(d => d.new_customers));
 
   return (
-    <div className="fade-in" style={{ display: "flex", flexDirection: "column", gap: 24, width: "100%", boxSizing: "border-box" }}>
-      
-      {/* ── TIER CAPACITY BANNER INDICATOR ── */}
-      {showLimitWarning && (
-        <div style={{ padding: "16px 20px", background: "rgba(245, 158, 11, 0.15)", border: "1px solid #f59e0b", borderRadius: 12, color: "#f59e0b", fontSize: 13, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div className="fade-in" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+      {/* Plan expiry alert */}
+      {daysLeft <= 7 && daysLeft > 0 && (
+        <div style={{ padding:"14px 20px", background:daysLeft<=3?"#fef2f2":"#fffbeb",
+          border:`1px solid ${daysLeft<=3?"#fca5a5":"#fde68a"}`,
+          borderRadius:12, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
           <div>
-            <strong>⚠️ Capacity Alert:</strong> Your pharmacy has registered <strong>{stats.totalCustomers} / 25</strong> customer slots allocated under the Free Trial tier.
+            <div style={{ fontSize:14, fontWeight:700, color:daysLeft<=3?"#dc2626":"#92400e" }}>
+              {daysLeft<=3?"🚨":"⚠️"} Your {user?.plan === "free" ? "Free Trial" : user?.plan + " plan"} expires in {daysLeft} day{daysLeft!==1?"s":""}!
+            </div>
+            <div style={{ fontSize:12, color:"#64748b", marginTop:2 }}>Upgrade now to avoid interruption to your pharmacy operations.</div>
           </div>
-          <button onClick={() => navigate("/pricing")} style={{ padding: "6px 14px", background: "#f59e0b", color: "#111827", border: "none", borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
-            Upgrade Now
+          <button onClick={()=>navigate("/pricing")}
+            style={{ padding:"9px 18px", background:"linear-gradient(135deg,#2563eb,#7c3aed)", color:"white",
+              border:"none", borderRadius:10, fontWeight:700, fontSize:13, cursor:"pointer", fontFamily:"inherit",
+              boxShadow:"0 4px 12px rgba(37,99,235,0.35)", whiteSpace:"nowrap" }}>
+            Upgrade Now →
           </button>
         </div>
       )}
+      
+      {/* Stats */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16 }}>
+        {stats.map((s, i) => (
+          <div key={i} className="card" style={{ padding: 24, background: s.bg }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <div>
+                <div style={{ fontSize: 28, fontWeight: 800, color: s.color }}>{s.value}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#334155", marginTop: 2 }}>{s.label}</div>
+              </div>
+              <span style={{ fontSize: 28 }}>{s.icon}</span>
+            </div>
+          </div>
+        ))}
+      </div>
 
-      {/* ── MAIN STATS GRID METRICS ROW MATRIX ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16, width: "100%" }}>
-        
-        {/* Total Customers Card */}
-        <div className="card" onClick={() => navigate("/customers")} style={{ padding: 20, background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 12, position: "relative", cursor: "pointer" }}>
-          <div style={{ fontSize: 28, fontWeight: 900, color: "var(--txt1)" }}>{stats.totalCustomers}</div>
-          <div style={{ fontSize: 13, color: "var(--txt3)", marginTop: 4 }}>Total Customers</div>
-          <span style={{ position: "absolute", right: 20, top: 20, fontSize: 20, opacity: 0.6 }}>👥</span>
-          <div style={{ fontSize: 11, color: "var(--txt4)", marginTop: 8 }}>
-            Tier Quota Max Allowed: {customerLimit}
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 16 }}>
+        {/* Monthly growth bar chart */}
+        <div className="card" style={{ padding: 24 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "#1e293b", marginBottom: 20 }}>New Customers per Month</div>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 10, height: 120 }}>
+            {(data.monthlyGrowth || []).map((d, i) => (
+              <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                <div style={{ fontSize: 10, color: "#94a3b8" }}>{d.new_customers}</div>
+                <div className="bar" style={{
+                  width: "100%",
+                  height: `${maxGrowth > 0 ? (d.new_customers / maxGrowth) * 100 : 0}px`,
+                  background: i === (data.monthlyGrowth.length - 1) ? "linear-gradient(180deg,#93c5fd,#bfdbfe)" : i === (data.monthlyGrowth.length - 2) ? "linear-gradient(180deg,#2563eb,#1d4ed8)" : "#e2e8f0"
+                }}></div>
+                <div style={{ fontSize: 10, color: "#94a3b8" }}>{d.month?.split(" ")[0]}</div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Active Customers Card */}
-        <div className="card" style={{ padding: 20, background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 12, position: "relative" }}>
-          <div style={{ fontSize: 28, fontWeight: 900, color: "#10b981" }}>{stats.active30d}</div>
-          <div style={{ fontSize: 13, color: "var(--txt3)", marginTop: 4 }}>Active (30d)</div>
-          <span style={{ position: "absolute", right: 20, top: 20, fontSize: 20, opacity: 0.6 }}>✅</span>
-          <div style={{ height: 3, background: "var(--bg4)", borderRadius: 2, marginTop: 12, width: "100%" }}>
-            <div style={{ height: "100%", width: "100%", background: "#10b981", borderRadius: 2 }}></div>
-          </div>
-        </div>
-
-        {/* Refills Pending Card */}
-        <div className="card" onClick={() => navigate("/reminders")} style={{ padding: 20, background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 12, position: "relative", cursor: "pointer" }}>
-          <div style={{ fontSize: 28, fontWeight: 900, color: "#ef4444" }}>{stats.refillsDue}</div>
-          <div style={{ fontSize: 13, color: "var(--txt3)", marginTop: 4 }}>Refills Due</div>
-          <span style={{ position: "absolute", right: 20, top: 20, fontSize: 20, opacity: 0.6 }}>🔔</span>
-          <div style={{ fontSize: 11, color: "#ef4444", fontWeight: 600, marginTop: 8 }}>⚠️ Urgent action flagged</div>
-        </div>
-
-        {/* Est Revenue Card */}
-        <div className="card" style={{ padding: 20, background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 12, position: "relative" }}>
-          <div style={{ fontSize: 28, fontWeight: 900, color: "var(--primary, #2563eb)" }}>
-            ₹{(stats.estRevenue / 1000).toFixed(1)}k
-          </div>
-          <div style={{ fontSize: 13, color: "var(--txt3)", marginTop: 4 }}>Est. Revenue</div>
-          <span style={{ position: "absolute", right: 20, top: 20, fontSize: 20, opacity: 0.6 }}>💰</span>
-          <div style={{ fontSize: 11, color: "var(--txt4)", marginTop: 8 }}>Tracked through invoices</div>
+        {/* Condition mix */}
+        <div className="card" style={{ padding: 24 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>Condition Mix</div>
+          {(data.conditionMix || []).map((c, i) => {
+            const total = data.conditionMix.reduce((a, x) => a + parseInt(x.count), 0);
+            const pct = Math.round((c.count / total) * 100);
+            const colors = ["#3b82f6","#ef4444","#8b5cf6","#06b6d4","#f59e0b","#10b981"];
+            return (
+              <div key={i} style={{ marginBottom: 12 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <span style={{ fontSize: 12, color: "#475569", fontWeight: 500 }}>{c.medical_condition}</span>
+                  <span style={{ fontSize: 12, color: colors[i % colors.length], fontWeight: 700 }}>{pct}%</span>
+                </div>
+                <div className="progress-bar">
+                  <div className="progress-fill" style={{ width: `${pct}%`, background: colors[i % colors.length] }}></div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* ── LOWER CONTENT SPLIT AREA VIEWPORT ── */}
-      {stats.totalCustomers === 0 ? (
-        <div className="card" style={{ padding: 48, background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 12, textAlign: "center", width: "100%", boxSizing: "border-box" }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🏥</div>
-          <h3 style={{ fontSize: 18, fontWeight: 700, color: "var(--txt1)", margin: "0 0 8px" }}>Welcome to PharmaSuiteX!</h3>
-          <p style={{ fontSize: 13, color: "var(--txt3)", maxWidth: 420, margin: "0 auto 24px", lineHeight: 1.6 }}>
-            Start by adding your first customer configuration rows to illuminate your analytics boards, automated refill alerts, and campaign metrics engine.
-          </p>
-          <button className="btn-primary" onClick={() => navigate("/customers")} style={{ padding: "10px 24px" }}>
-            + Add First Customer Profile
-          </button>
-        </div>
-      ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20, width: "100%" }}>
-          {/* Quick Shortcuts Box */}
-          <div className="card" style={{ padding: 24, background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 12 }}>
-            <h4 style={{ fontSize: 15, fontWeight: 700, color: "var(--txt1)", margin: "0 0 16px" }}>Core Modules Shortcuts</h4>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <div onClick={() => navigate("/invoice")} style={{ padding: 14, background: "var(--bg3)", borderRadius: 8, cursor: "pointer", border: "1px solid var(--border)" }}>
-                <div style={{ fontSize: 18, marginBottom: 4 }}>🧾</div>
-                <div style={{ fontSize: 13, fontWeight: 700 }}>Generate Billing Invoice</div>
-              </div>
-              <div onClick={() => navigate("/campaigns")} style={{ padding: 14, background: "var(--bg3)", borderRadius: 8, cursor: "pointer", border: "1px solid var(--border)" }}>
-                <div style={{ fontSize: 18, marginBottom: 4 }}>📣</div>
-                <div style={{ fontSize: 13, fontWeight: 700 }}>Launch Text Campaign</div>
-              </div>
+      {/* Top Medicines (Full width now, as the second column was removed) */}
+      <div className="card" style={{ padding: 24 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>💊 Top Medicines</div>
+        {(data.topMedicines || []).map((m, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+            <div className="ring" style={{ width: 28, height: 28, background: "#2563eb", color: "white", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{i + 1}</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#1e293b" }}>{m.name}</div>
+              <div style={{ fontSize: 11, color: "#94a3b8" }}>{m.category}</div>
             </div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#2563eb" }}>{m.patient_count} patients</div>
           </div>
-
-          {/* Plan Info Mini Panel */}
-          <div className="card" style={{ padding: 24, background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 12, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-            <div>
-              <h4 style={{ fontSize: 14, fontWeight: 700, color: "var(--txt4)", margin: "0 0 12px", textTransform: "uppercase" }}>License Profile</h4>
-              <div style={{ fontSize: 18, fontWeight: 800, color: "var(--primary, #2563eb)", textTransform: "uppercase", marginBottom: 6 }}>
-                {usage?.planName || "Free Tier Evaluation"}
-              </div>
-              <p style={{ fontSize: 12, color: "var(--txt3)", margin: 0, lineHeight: 1.5 }}>
-                Your plan tracks customer quotas up to {customerLimit} total active directory spaces.
-              </p>
-            </div>
-            {planTier !== "premium" && (
-              <button onClick={() => navigate("/pricing")} style={{ width: "100%", padding: 10, background: "linear-gradient(135deg, #7c3aed, #2563eb)", color: "white", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer", marginTop: 16 }}>
-                ⚡ Boost Plan Thresholds
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
+        ))}
+      </div>
     </div>
   );
 }
