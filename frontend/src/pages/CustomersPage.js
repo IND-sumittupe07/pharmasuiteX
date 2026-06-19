@@ -16,6 +16,8 @@ export default function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [showMedModal, setShowMedModal] = useState(false);
   const [editingMed, setEditingMed] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({});
 
   useEffect(() => {
     fetchCustomers();
@@ -37,9 +39,20 @@ export default function CustomersPage() {
     try {
       const res = await api.get(`/customers/${id}`);
       setSelectedCustomer(res.data);
+      setEditForm(res.data);
       setView("detail");
     } catch (err) {
       console.error("Error fetching customer detail:", err);
+    }
+  };
+
+  const handleUpdate = async () => {
+    try {
+      await api.put(`/customers/${selectedCustomer.id}`, editForm);
+      setIsEditing(false);
+      fetchCustomerDetail(selectedCustomer.id);
+    } catch (err) {
+      alert("Failed to update");
     }
   };
 
@@ -82,29 +95,50 @@ export default function CustomersPage() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: 24 }}>
           {/* LEFT: Profile */}
           <div className="card" style={{ padding: 24 }}>
-            <div style={{ textAlign: "center", marginBottom: 24 }}>
-              <div style={{
-                width: 80, height: 80, margin: "0 auto", borderRadius: "50%",
-                background: `hsl(${(selectedCustomer.full_name?.charCodeAt(0) || 0) * 5},60%,50%)`,
-                color: "white", fontSize: 32, fontWeight: 700,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                {selectedCustomer.full_name?.[0] || "?"}
+            {isEditing ? (
+              <div style={{ display: "grid", gap: 10 }}>
+                <input value={editForm.full_name || ""} onChange={e => setEditForm({...editForm, full_name: e.target.value})} placeholder="Name" style={{ padding: 8 }} />
+                <input value={editForm.mobile || ""} onChange={e => setEditForm({...editForm, mobile: e.target.value})} placeholder="Mobile" style={{ padding: 8 }} />
+                <input value={editForm.city || ""} onChange={e => setEditForm({...editForm, city: e.target.value})} placeholder="City" style={{ padding: 8 }} />
+                <button onClick={handleUpdate} style={{ padding: "10px", background: "var(--primary)", color: "white", border: "none", borderRadius: 8, cursor: "pointer" }}>Save Changes</button>
+                <button onClick={() => setIsEditing(false)} style={{ padding: "10px", cursor: "pointer" }}>Cancel</button>
               </div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: "var(--txt1)", marginTop: 16 }}>
-                {selectedCustomer.full_name}
-              </div>
-              <div style={{ fontSize: 12, color: "var(--txt4)" }}>{selectedCustomer.customer_code}</div>
-            </div>
+            ) : (
+              <>
+                <div style={{ textAlign: "center", marginBottom: 24 }}>
+                  <div style={{
+                    width: 80, height: 80, margin: "0 auto", borderRadius: "50%",
+                    background: `hsl(${(selectedCustomer.full_name?.charCodeAt(0) || 0) * 5},60%,50%)`,
+                    color: "white", fontSize: 32, fontWeight: 700,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    {selectedCustomer.full_name?.[0] || "?"}
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: "var(--txt1)", marginTop: 16 }}>
+                    {selectedCustomer.full_name}
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--txt4)" }}>{selectedCustomer.customer_code}</div>
+                </div>
 
-            <div style={{ display: "grid", gap: 14, fontSize: 13 }}>
-              <Row label="📱 Mobile" value={selectedCustomer.mobile} />
-              <Row label="🎂 Age" value={selectedCustomer.age ? `${selectedCustomer.age} years` : "—"} />
-              <Row label="👤 Gender" value={selectedCustomer.gender || "—"} />
-              <Row label="🏙️ City" value={selectedCustomer.city || "—"} />
-              <Row label="🏥 Condition" value={selectedCustomer.medical_condition || "—"} />
-              <Row label="🩺 Doctor" value={selectedCustomer.doctor_name || "—"} />
-            </div>
+                <div style={{ display: "grid", gap: 14, fontSize: 13 }}>
+                  <Row label="📱 Mobile" value={selectedCustomer.mobile} />
+                  <Row label="🎂 Age" value={selectedCustomer.age ? `${selectedCustomer.age} years` : "—"} />
+                  <Row label="👤 Gender" value={selectedCustomer.gender || "—"} />
+                  <Row label="🏙️ City" value={selectedCustomer.city || "—"} />
+                  <Row label="🏥 Condition" value={selectedCustomer.medical_condition || "—"} />
+                  <Row label="🩺 Doctor" value={selectedCustomer.doctor_name || "—"} />
+                </div>
+
+                <button onClick={() => setIsEditing(true)}
+                  style={{
+                    width: "100%", marginTop: 24, padding: "12px 16px",
+                    background: "var(--primary)", color: "white", border: "none",
+                    borderRadius: 8, fontWeight: 600, fontSize: 14, cursor: "pointer",
+                  }}>
+                  ✏️ Edit Customer
+                </button>
+              </>
+            )}
           </div>
 
           {/* RIGHT: Medicines */}
@@ -117,6 +151,7 @@ export default function CustomersPage() {
                   + Add Medicine
                 </button>
               </div>
+
               {(selectedCustomer.medicines || []).map(med => (
                 <div key={med.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 14px", borderRadius: 10, marginBottom: 8, background: "var(--bg3)", border: "1px solid var(--border)" }}>
                   <div>
@@ -148,7 +183,10 @@ export default function CustomersPage() {
   // ── LIST VIEW ──────────────────────────────────────
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto" }}>
-      <div style={{ fontSize: 20, fontWeight: 700, color: "var(--txt1)", marginBottom: 24 }}>Customers</div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <div style={{ fontSize: 20, fontWeight: 700, color: "var(--txt1)" }}>Customers</div>
+      </div>
+
       <div className="card" style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
           <thead>
@@ -166,7 +204,8 @@ export default function CustomersPage() {
           </thead>
           <tbody>
             {customers.map(c => {
-              const daysLeft = c.earliest_refill ? Math.ceil((new Date(c.earliest_refill) - new Date()) / 86400000) : null;
+              const earliestRefill = c.earliest_refill ? new Date(c.earliest_refill) : null;
+              const daysLeft = earliestRefill ? Math.ceil((earliestRefill - new Date()) / 86400000) : null;
               return (
                 <tr key={c.id} style={{ borderBottom: "1px solid var(--border2)", fontSize: 13 }}>
                   <td style={{ padding: "16px" }}>
@@ -180,14 +219,28 @@ export default function CustomersPage() {
                       </div>
                     </div>
                   </td>
-                  <td style={{ padding: "16px" }}>{c.mobile}</td>
-                  <td style={{ padding: "16px" }}>{c.age ? `${c.age}y` : "—"}</td>
-                  <td style={{ padding: "16px" }}><span style={{ padding: "4px 8px", borderRadius: 4, background: `${conditionColor[c.medical_condition?.toLowerCase()] || "#64748b"}18`, color: conditionColor[c.medical_condition?.toLowerCase()] || "#64748b" }}>{c.medical_condition || "—"}</span></td>
-                  <td style={{ padding: "16px" }}>{c.city || "—"}</td>
-                  <td style={{ padding: "16px", fontWeight: 700 }}>{c.medicine_count || 0}</td>
-                  <td style={{ padding: "16px" }}>{daysLeft !== null ? <span style={{ fontWeight: 700, color: daysLeft < 0 ? "#dc2626" : daysLeft <= 5 ? "#d97706" : "var(--txt4)" }}>{daysLeft < 0 ? `${Math.abs(daysLeft)}d overdue` : `${daysLeft}d left`}</span> : "—"}</td>
-                  <td style={{ padding: "16px", fontWeight: 700 }}>₹{parseFloat(c.total_spend || 0).toLocaleString()}</td>
-                  <td style={{ padding: "16px" }}><button onClick={() => fetchCustomerDetail(c.id)} style={{ background: "none", border: "none", color: "var(--primary)", cursor: "pointer", fontWeight: 600 }}>View</button></td>
+                  <td style={{ padding: "16px", color: "var(--txt3)" }}>{c.mobile}</td>
+                  <td style={{ padding: "16px", color: "var(--txt3)" }}>{c.age ? `${c.age}y` : "—"}</td>
+                  <td style={{ padding: "16px" }}>
+                    <span style={{ padding: "4px 8px", borderRadius: "4px", background: `${conditionColor[c.medical_condition?.toLowerCase()] || "#64748b"}18`, color: conditionColor[c.medical_condition?.toLowerCase()] || "#64748b" }}>
+                      {c.medical_condition || "—"}
+                    </span>
+                  </td>
+                  <td style={{ padding: "16px", color: "var(--txt3)" }}>{c.city || "—"}</td>
+                  <td style={{ padding: "16px", fontWeight: 700, color: "var(--primary)" }}>{c.medicine_count || 0}</td>
+                  <td style={{ padding: "16px" }}>
+                    {daysLeft !== null ? (
+                      <span style={{ fontSize: 12, fontWeight: 700, color: daysLeft < 0 ? "#dc2626" : daysLeft <= 5 ? "#d97706" : "var(--txt4)" }}>
+                        {daysLeft < 0 ? `${Math.abs(daysLeft)}d overdue` : `${daysLeft}d left`}
+                      </span>
+                    ) : "—"}
+                  </td>
+                  <td style={{ padding: "16px", fontWeight: 700, color: "var(--primary)" }}>₹{parseFloat(c.total_spend || 0).toLocaleString()}</td>
+                  <td style={{ padding: "16px" }}>
+                    <button onClick={() => fetchCustomerDetail(c.id)} style={{ background: "none", border: "none", color: "var(--primary)", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
+                      View
+                    </button>
+                  </td>
                 </tr>
               );
             })}
@@ -198,4 +251,11 @@ export default function CustomersPage() {
   );
 }
 
-function Row({ label, value }) { return <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "var(--txt3)" }}>{label}</span><span style={{ fontWeight: 600 }}>{value}</span></div>; }
+function Row({ label, value }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between" }}>
+      <span style={{ color: "var(--txt3)" }}>{label}</span>
+      <span style={{ fontWeight: 600, color: "var(--txt1)" }}>{value}</span>
+    </div>
+  );
+}
