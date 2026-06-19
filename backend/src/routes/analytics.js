@@ -20,13 +20,15 @@ router.get("/dashboard", async (req, res) => {
       [pharmacyId]
     ).catch(() => ({ rows: [{ count: 0 }] }));
 
+    // ✅ FIXED: Proper interval cast + includes overdue (not just future 7 days)
+    // Refill date = start_date + duration_days, minus 5-day early reminder
     const refillsRes = await query(
       `SELECT COUNT(*) as count FROM customer_medicines
        WHERE pharmacy_id=$1 AND is_active=true
-       AND (start_date + (duration_days || ' days')::INTERVAL) 
-           BETWEEN NOW() AND NOW() + INTERVAL '7 days'`,
+       AND (start_date + (duration_days || ' days')::INTERVAL - INTERVAL '5 days')::DATE 
+           <= CURRENT_DATE + INTERVAL '7 days'`,
       [pharmacyId]
-    ).catch(() => ({ rows: [{ count: 0 }] }));
+    ).catch((e) => { console.error("refillsRes error:", e.message); return { rows: [{ count: 0 }] }; });
 
     const revenueRes = await query(
       `SELECT COALESCE(SUM(total_amount), 0) as total FROM purchases WHERE pharmacy_id=$1`,
@@ -67,7 +69,7 @@ router.get("/dashboard", async (req, res) => {
   }
 });
 
-// ✅ NEW: GET /api/analytics/revenue — Monthly revenue (last 6 months)
+// GET /api/analytics/revenue — Monthly revenue (last 6 months)
 router.get("/revenue", async (req, res) => {
   const { pharmacyId } = req.user;
   try {
@@ -83,7 +85,6 @@ router.get("/revenue", async (req, res) => {
       [pharmacyId]
     );
 
-    // Ensure we always return 6 months even if some have no data
     const monthsMap = {};
     result.rows.forEach(r => { monthsMap[r.month] = parseFloat(r.revenue); });
 
@@ -93,16 +94,11 @@ router.get("/revenue", async (req, res) => {
       d.setDate(1);
       d.setMonth(d.getMonth() - i);
       const label = d.toLocaleString("default", { month: "short", year: "numeric" });
-      months.push({
-        month: label,
-        revenue: monthsMap[label] || 0,
-      });
+      months.push({ month: label, revenue: monthsMap[label] || 0 });
     }
-
     res.json(months);
   } catch (err) {
     console.error("Analytics revenue error:", err.message);
-    // Return empty 6-month array instead of crashing
     const months = [];
     for (let i = 5; i >= 0; i--) {
       const d = new Date();
@@ -110,6 +106,30 @@ router.get("/revenue", async (req, res) => {
       months.push({ month: d.toLocaleString("default", { month: "short" }), revenue: 0 });
     }
     res.json(months);
+  }
+});
+
+// ✅ NEW: GET /api/analytics/refills — Detailed list (used by Reminders page too)
+router.get("/refills", async (req, res) => {
+  const { pharmacyId } = req.user;
+  try {
+    const result = await query(
+      `SELECT cm.id, cm.medicine_name, cm.dose, cm.quantity, cm.start_date, cm.duration_days,
+              (cm.start_date + (cm.duration_days || ' days')::INTERVAL)::DATE as refill_date,
+              ((cm.start_date + (cm.duration_days || ' days')::INTERVAL)::DATE - CURRENT_DATE) as days_left,
+              c.id as customer_id, c.full_name, c.mobile
+       FROM customer_medicines cm
+       JOIN customers c ON c.id = cm.customer_id
+       WHERE cm.pharmacy_id = $1 AND cm.is_active = true
+       AND (cm.start_date + (cm.duration_days || ' days')::INTERVAL - INTERVAL '5 days')::DATE 
+           <= CURRENT_DATE + INTERVAL '7 days'
+       ORDER BY refill_date ASC`,
+      [pharmacyId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Refills list error:", err.message);
+    res.json([]);
   }
 });
 
