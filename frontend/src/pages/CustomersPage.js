@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../api/client";
 import AddMedicineModal from "../components/AddMedicineModal";
-import EditCustomerModal from "../components/EditCustomerModal";
 
 const conditionColor = {
   diabetes: "#3b82f6",
@@ -16,7 +15,6 @@ export default function CustomersPage() {
   const [view, setView] = useState("list");
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [showMedModal, setShowMedModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [editingMed, setEditingMed] = useState(null);
 
   useEffect(() => {
@@ -107,18 +105,9 @@ export default function CustomersPage() {
               <Row label="🏥 Condition" value={selectedCustomer.medical_condition || "—"} />
               <Row label="🩺 Doctor" value={selectedCustomer.doctor_name || "—"} />
             </div>
-
-            <button onClick={() => setShowEditModal(true)}
-              style={{
-                width: "100%", marginTop: 24, padding: "12px 16px",
-                background: "var(--primary)", color: "white", border: "none",
-                borderRadius: 8, fontWeight: 600, fontSize: 14, cursor: "pointer",
-              }}>
-              ✏️ Edit Customer
-            </button>
           </div>
 
-          {/* RIGHT: Medicines + Purchases */}
+          {/* RIGHT: Medicines */}
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div className="card" style={{ padding: 24 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
@@ -128,40 +117,22 @@ export default function CustomersPage() {
                   + Add Medicine
                 </button>
               </div>
-
-              {(selectedCustomer.medicines || []).length === 0 ? (
-                <div style={{ textAlign: "center", padding: 24, color: "var(--txt4)", fontSize: 13 }}>
-                  No medicines tracked yet.
+              {(selectedCustomer.medicines || []).map(med => (
+                <div key={med.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 14px", borderRadius: 10, marginBottom: 8, background: "var(--bg3)", border: "1px solid var(--border)" }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--txt1)" }}>{med.medicine_name}</div>
+                    <div style={{ fontSize: 11, color: "var(--txt4)" }}>{med.dose || "—"}</div>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button onClick={() => { setEditingMed(med); setShowMedModal(true); }} style={{ padding: 6, background: "none", border: "none", cursor: "pointer" }}>✏️</button>
+                    <button onClick={() => removeMedicine(med.id)} style={{ padding: 6, background: "none", border: "none", cursor: "pointer" }}>🗑</button>
+                  </div>
                 </div>
-              ) : (
-                selectedCustomer.medicines.map(med => {
-                  const daysLeft = med.days_left;
-                  const urgent = daysLeft !== null && daysLeft <= 5;
-                  const overdue = daysLeft !== null && daysLeft < 0;
-                  return (
-                    <div key={med.id} style={{
-                      display: "flex", justifyContent: "space-between", alignItems: "center",
-                      padding: "12px 14px", borderRadius: 10, marginBottom: 8,
-                      background: overdue ? "rgba(220,38,38,0.1)" : urgent ? "rgba(245,158,11,0.1)" : "var(--bg3)",
-                      border: `1px solid ${overdue ? "#fca5a5" : urgent ? "#fde68a" : "var(--border)"}`,
-                    }}>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: "var(--txt1)" }}>{med.medicine_name}</div>
-                        <div style={{ fontSize: 11, color: "var(--txt4)" }}>{med.dose || "—"}</div>
-                      </div>
-                      <div style={{ display: "flex", gap: 6 }}>
-                        <button onClick={() => { setEditingMed(med); setShowMedModal(true); }} style={{ padding: "6px 10px", background: "rgba(37,99,235,0.15)", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 12, color: "var(--primary)" }}>✏️</button>
-                        <button onClick={() => removeMedicine(med.id)} style={{ padding: "6px 10px", background: "rgba(239,68,68,0.15)", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 12, color: "#ef4444" }}>🗑</button>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Modals */}
         {showMedModal && (
           <AddMedicineModal
             customerId={selectedCustomer.id}
@@ -170,24 +141,14 @@ export default function CustomersPage() {
             onClose={() => { setShowMedModal(false); setEditingMed(null); }}
           />
         )}
-        {showEditModal && (
-          <EditCustomerModal
-            customer={selectedCustomer}
-            onSaved={() => { setShowEditModal(false); fetchCustomerDetail(selectedCustomer.id); }}
-            onClose={() => setShowEditModal(false)}
-          />
-        )}
       </div>
     );
   }
 
-  // ── LIST VIEW (FIXED ALIGNMENT) ──────────────────────────────────────
+  // ── LIST VIEW ──────────────────────────────────────
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <div style={{ fontSize: 20, fontWeight: 700, color: "var(--txt1)" }}>Customers</div>
-      </div>
-
+      <div style={{ fontSize: 20, fontWeight: 700, color: "var(--txt1)", marginBottom: 24 }}>Customers</div>
       <div className="card" style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
           <thead>
@@ -205,13 +166,12 @@ export default function CustomersPage() {
           </thead>
           <tbody>
             {customers.map(c => {
-              const earliestRefill = c.earliest_refill ? new Date(c.earliest_refill) : null;
-              const daysLeft = earliestRefill ? Math.ceil((earliestRefill - new Date()) / 86400000) : null;
+              const daysLeft = c.earliest_refill ? Math.ceil((new Date(c.earliest_refill) - new Date()) / 86400000) : null;
               return (
                 <tr key={c.id} style={{ borderBottom: "1px solid var(--border2)", fontSize: 13 }}>
                   <td style={{ padding: "16px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => fetchCustomerDetail(c.id)}>
-                      <div className="ring" style={{ width: 32, height: 32, background: `hsl(${(c.full_name?.charCodeAt(0)||0)*5},60%,50%)`, color: "white", fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", flexShrink: 0 }}>
+                      <div style={{ width: 32, height: 32, background: `hsl(${(c.full_name?.charCodeAt(0)||0)*5},60%,50%)`, color: "white", fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", flexShrink: 0 }}>
                         {c.full_name?.[0] || "?"}
                       </div>
                       <div>
@@ -220,28 +180,14 @@ export default function CustomersPage() {
                       </div>
                     </div>
                   </td>
-                  <td style={{ padding: "16px", color: "var(--txt3)" }}>{c.mobile}</td>
-                  <td style={{ padding: "16px", color: "var(--txt3)" }}>{c.age ? `${c.age}y` : "—"}</td>
-                  <td style={{ padding: "16px" }}>
-                    <span style={{ padding: "4px 8px", borderRadius: "4px", background: `${conditionColor[c.medical_condition?.toLowerCase()] || "#64748b"}18`, color: conditionColor[c.medical_condition?.toLowerCase()] || "#64748b" }}>
-                      {c.medical_condition || "—"}
-                    </span>
-                  </td>
-                  <td style={{ padding: "16px", color: "var(--txt3)" }}>{c.city || "—"}</td>
-                  <td style={{ padding: "16px", fontWeight: 700, color: "var(--primary)" }}>{c.medicine_count || 0}</td>
-                  <td style={{ padding: "16px" }}>
-                    {daysLeft !== null ? (
-                      <span style={{ fontSize: 12, fontWeight: 700, color: daysLeft < 0 ? "#dc2626" : daysLeft <= 5 ? "#d97706" : "var(--txt4)" }}>
-                        {daysLeft < 0 ? `${Math.abs(daysLeft)}d overdue` : `${daysLeft}d left`}
-                      </span>
-                    ) : "—"}
-                  </td>
-                  <td style={{ padding: "16px", fontWeight: 700, color: "var(--primary)" }}>₹{parseFloat(c.total_spend || 0).toLocaleString()}</td>
-                  <td style={{ padding: "16px" }}>
-                    <button onClick={() => fetchCustomerDetail(c.id)} style={{ background: "none", border: "none", color: "var(--primary)", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
-                      View
-                    </button>
-                  </td>
+                  <td style={{ padding: "16px" }}>{c.mobile}</td>
+                  <td style={{ padding: "16px" }}>{c.age ? `${c.age}y` : "—"}</td>
+                  <td style={{ padding: "16px" }}><span style={{ padding: "4px 8px", borderRadius: 4, background: `${conditionColor[c.medical_condition?.toLowerCase()] || "#64748b"}18`, color: conditionColor[c.medical_condition?.toLowerCase()] || "#64748b" }}>{c.medical_condition || "—"}</span></td>
+                  <td style={{ padding: "16px" }}>{c.city || "—"}</td>
+                  <td style={{ padding: "16px", fontWeight: 700 }}>{c.medicine_count || 0}</td>
+                  <td style={{ padding: "16px" }}>{daysLeft !== null ? <span style={{ fontWeight: 700, color: daysLeft < 0 ? "#dc2626" : daysLeft <= 5 ? "#d97706" : "var(--txt4)" }}>{daysLeft < 0 ? `${Math.abs(daysLeft)}d overdue` : `${daysLeft}d left`}</span> : "—"}</td>
+                  <td style={{ padding: "16px", fontWeight: 700 }}>₹{parseFloat(c.total_spend || 0).toLocaleString()}</td>
+                  <td style={{ padding: "16px" }}><button onClick={() => fetchCustomerDetail(c.id)} style={{ background: "none", border: "none", color: "var(--primary)", cursor: "pointer", fontWeight: 600 }}>View</button></td>
                 </tr>
               );
             })}
@@ -252,11 +198,4 @@ export default function CustomersPage() {
   );
 }
 
-function Row({ label, value }) {
-  return (
-    <div style={{ display: "flex", justifyContent: "space-between" }}>
-      <span style={{ color: "var(--txt3)" }}>{label}</span>
-      <span style={{ fontWeight: 600, color: "var(--txt1)" }}>{value}</span>
-    </div>
-  );
-}
+function Row({ label, value }) { return <div style={{ display: "flex", justifyContent: "space-between" }}><span style={{ color: "var(--txt3)" }}>{label}</span><span style={{ fontWeight: 600 }}>{value}</span></div>; }
