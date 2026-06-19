@@ -75,35 +75,35 @@ export default function CustomersPage() {
           }}
           style={{
             background: "none", border: "none", cursor: "pointer",
-            color: "var(--primary)", fontWeight: 600, marginBottom: 16, fontSize: 14
+            color: "var(--primary)", fontWeight: 600, marginBottom: 16
           }}
         >
           ← Back to Customers
         </button>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 24 }}>
-          {/* Profile Card */}
           <div className="card" style={{ padding: 24 }}>
             <div style={{ textAlign: "center", marginBottom: 24 }}>
               <div style={{
                 width: 80, height: 80, margin: "0 auto", borderRadius: "50%",
                 background: `hsl(${(selectedCustomer.full_name?.charCodeAt(0) || 0) * 5},60%,50%)`,
                 color: "white", fontSize: 32, fontWeight: 700,
-                display: "flex", alignItems: "center", justifyContent: "center",
+                display: "flex", alignItems: "center", justifyContent: "center"
               }}>
                 {selectedCustomer.full_name?.[0] || "?"}
               </div>
               <div style={{ fontSize: 18, fontWeight: 700, marginTop: 16 }}>{selectedCustomer.full_name}</div>
               <div style={{ fontSize: 12, color: "var(--txt4)" }}>{selectedCustomer.customer_code}</div>
             </div>
-            
             <div style={{ display: "grid", gap: 14, fontSize: 13 }}>
               <Row label="📱 Mobile" value={selectedCustomer.mobile} />
               <Row label="🎂 Age" value={selectedCustomer.age ? `${selectedCustomer.age} years` : "—"} />
+              <Row label="👤 Gender" value={selectedCustomer.gender || "—"} />
               <Row label="🏙️ City" value={selectedCustomer.city || "—"} />
               <Row label="🏥 Condition" value={selectedCustomer.medical_condition || "—"} />
+              <Row label="🩺 Doctor" value={selectedCustomer.doctor_name || "—"} />
             </div>
-
+            
             <button 
               onClick={() => setShowEditModal(true)}
               style={{ width: "100%", marginTop: 24, padding: "12px", background: "var(--primary)", color: "white", border: "none", borderRadius: 8, cursor: "pointer" }}
@@ -112,7 +112,6 @@ export default function CustomersPage() {
             </button>
           </div>
 
-          {/* Medicines Section */}
           <div className="card" style={{ padding: 24 }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
               <div style={{ fontWeight: 700 }}>💊 Active Medicines</div>
