@@ -15,15 +15,17 @@ const emptyForm = {
 export default function CustomersPage() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading]     = useState(true);
-  const [view, setView]           = useState("list"); // list | detail | add | edit
+  const [view, setView]           = useState("list"); // list | detail
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [showMedModal, setShowMedModal] = useState(false);
   const [editingMed, setEditingMed]     = useState(null);
 
-  // form state (shared by Add + Edit)
-  const [form, setForm]     = useState(emptyForm);
-  const [saving, setSaving] = useState(false);
-  const [formError, setFormError] = useState("");
+  // ✅ NEW: customer add/edit modal state
+  const [showCustModal, setShowCustModal] = useState(false);
+  const [custForm, setCustForm]           = useState(emptyForm);
+  const [custSaving, setCustSaving]       = useState(false);
+  const [custError, setCustError]         = useState("");
+  const [isEditingCust, setIsEditingCust] = useState(false);
 
   useEffect(() => { fetchCustomers(); }, []);
 
@@ -59,18 +61,17 @@ export default function CustomersPage() {
     }
   };
 
-  const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
-
-  // ── Open Add form ──────────────────────────────────────────────
-  const openAdd = () => {
-    setForm(emptyForm);
-    setFormError("");
-    setView("add");
+  // ── Open "Add Customer" modal (from list view) ──────────────────────
+  const openAddCustomer = () => {
+    setCustForm(emptyForm);
+    setIsEditingCust(false);
+    setCustError("");
+    setShowCustModal(true);
   };
 
-  // ✅ Open Edit form — pre-filled from selectedCustomer (now functional!)
-  const openEdit = () => {
-    setForm({
+  // ✅ "Edit Customer" button now actually works — opens same form, prefilled
+  const openEditCustomer = () => {
+    setCustForm({
       fullName:         selectedCustomer.full_name || "",
       age:              selectedCustomer.age || "",
       gender:           selectedCustomer.gender || "Male",
@@ -80,31 +81,32 @@ export default function CustomersPage() {
       medicalCondition: selectedCustomer.medical_condition || "",
       notes:            selectedCustomer.notes || "",
     });
-    setFormError("");
-    setView("edit");
+    setIsEditingCust(true);
+    setCustError("");
+    setShowCustModal(true);
   };
 
-  // ── Save (handles both Add + Edit) ─────────────────────────────
-  const saveCustomer = async () => {
-    if (!form.fullName.trim()) { setFormError("Full name is required"); return; }
-    if (!form.mobile.trim())   { setFormError("Mobile number is required"); return; }
+  const setField = k => e => setCustForm(f => ({ ...f, [k]: e.target.value }));
 
-    setSaving(true);
-    setFormError("");
+  const saveCustomer = async () => {
+    if (!custForm.fullName.trim()) { setCustError("Full name is required"); return; }
+    if (!custForm.mobile.trim())   { setCustError("Mobile number is required"); return; }
+
+    setCustSaving(true);
+    setCustError("");
     try {
-      if (view === "edit") {
-        const res = await api.put(`/customers/${selectedCustomer.id}`, form);
-        setSelectedCustomer(prev => ({ ...prev, ...res.data }));
-        setView("detail");
+      if (isEditingCust) {
+        await api.put(`/customers/${selectedCustomer.id}`, custForm);
+        await fetchCustomerDetail(selectedCustomer.id);
       } else {
-        const res = await api.post("/customers", form);
+        await api.post("/customers", custForm);
         await fetchCustomers();
-        setView("list");
       }
+      setShowCustModal(false);
     } catch (err) {
-      setFormError(err.response?.data?.error || "Failed to save customer");
+      setCustError(err.response?.data?.error || "Failed to save customer");
     } finally {
-      setSaving(false);
+      setCustSaving(false);
     }
   };
 
@@ -112,140 +114,65 @@ export default function CustomersPage() {
     return <div style={{ textAlign: "center", padding: 40, color: "var(--txt4)" }}>Loading customers...</div>;
   }
 
-  // ════════════════════════════════════════════════════════════════
-  // ADD / EDIT FORM VIEW — same layout used for both
-  // ════════════════════════════════════════════════════════════════
-  if (view === "add" || view === "edit") {
-    const isEdit = view === "edit";
-    return (
-      <div className="fade-in" style={{ maxWidth: 640, margin: "0 auto" }}>
-        <button
-          onClick={() => setView(isEdit ? "detail" : "list")}
-          style={{ background: "none", border: "none", cursor: "pointer", color: "var(--primary)", fontWeight: 600, marginBottom: 16, fontSize: 14 }}
-        >
-          ← Back
-        </button>
-
-        <div className="card" style={{ padding: 32 }}>
-          <div style={{ fontSize: 18, fontWeight: 800, color: "var(--txt1)", marginBottom: 4 }}>
-            {isEdit ? "✏️ Edit Customer" : "➕ Add New Customer"}
-          </div>
-          <div style={{ fontSize: 12, color: "var(--txt4)", marginBottom: 24 }}>
-            {isEdit ? "Update this customer's details below." : "Fill in the customer's details to add them to your registry."}
-          </div>
-
-          {formError && (
-            <div style={{
-              padding: "10px 14px", borderRadius: 8, marginBottom: 18, fontSize: 13,
-              background: "rgba(239,68,68,0.1)", color: "#dc2626", border: "1px solid #fca5a5",
-            }}>
-              {formError}
-            </div>
-          )}
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-
-            <div style={{ gridColumn: "1/-1" }}>
-              <Label text="Full Name *" />
-              <input className="input" placeholder="e.g. Rajesh Tope" value={form.fullName} onChange={set("fullName")} />
-            </div>
-
-            <div>
-              <Label text="Mobile Number *" />
-              <input className="input" type="tel" placeholder="10-digit number" value={form.mobile} onChange={set("mobile")} />
-            </div>
-
-            <div>
-              <Label text="Age" />
-              <input className="input" type="number" placeholder="e.g. 45" value={form.age} onChange={set("age")} />
-            </div>
-
-            <div>
-              <Label text="Gender" />
-              <select className="input" value={form.gender} onChange={set("gender")} style={{ background: "var(--input-bg, var(--bg2))", color: "var(--txt1)" }}>
-                {["Male", "Female", "Other"].map(g => <option key={g} value={g}>{g}</option>)}
-              </select>
-            </div>
-
-            <div>
-              <Label text="City" />
-              <input className="input" placeholder="e.g. Pune" value={form.city} onChange={set("city")} />
-            </div>
-
-            <div style={{ gridColumn: "1/-1" }}>
-              <Label text="Address" />
-              <input className="input" placeholder="Full address (optional)" value={form.address} onChange={set("address")} />
-            </div>
-
-            <div style={{ gridColumn: "1/-1" }}>
-              <Label text="Medical Condition" />
-              <input className="input" placeholder="e.g. Diabetes, Hypertension" value={form.medicalCondition} onChange={set("medicalCondition")} />
-            </div>
-
-            <div style={{ gridColumn: "1/-1" }}>
-              <Label text="Notes (optional)" />
-              <textarea className="input" rows={2} placeholder="Any additional notes..." value={form.notes} onChange={set("notes")} style={{ resize: "none" }} />
-            </div>
-          </div>
-
-          <div style={{ display: "flex", gap: 10, marginTop: 24 }}>
-            <button className="btn-primary" style={{ flex: 1 }} onClick={saveCustomer} disabled={saving}>
-              {saving ? "Saving..." : isEdit ? "Save Changes" : "Add Customer"}
-            </button>
-            <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setView(isEdit ? "detail" : "list")}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ════════════════════════════════════════════════════════════════
-  // DETAIL VIEW — fixed alignment: equal-height cards, consistent grid
-  // ════════════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════════════════
+  // DETAIL VIEW
+  // ════════════════════════════════════════════════════════════════════
   if (view === "detail" && selectedCustomer) {
+    const medicines = selectedCustomer.medicines || [];
+    const purchases = selectedCustomer.purchases || [];
+
     return (
       <div className="fade-in" style={{ maxWidth: 1400, margin: "0 auto" }}>
         <button
           onClick={() => { setView("list"); setSelectedCustomer(null); fetchCustomers(); }}
-          style={{ background: "none", border: "none", cursor: "pointer", color: "var(--primary)", fontWeight: 600, marginBottom: 16, fontSize: 14 }}
+          style={{
+            background: "none", border: "none", cursor: "pointer",
+            color: "var(--primary)", fontWeight: 600, marginBottom: 16, fontSize: 14,
+            display: "flex", alignItems: "center", gap: 6,
+          }}
         >
           ← Back to Customers
         </button>
 
-        {/* ✅ items-start so both columns align to the same top edge,
-               and the right column is a flex stack so its two cards
-               line up consistently regardless of content length */}
+        {/* ✅ Aligned 2-column grid: fixed-width profile card + flexible right column */}
         <div style={{ display: "grid", gridTemplateColumns: "340px 1fr", gap: 24, alignItems: "start" }}>
 
-          {/* LEFT: Profile — fixed width column so it never stretches oddly */}
+          {/* ───── LEFT: Profile card ───── */}
           <div className="card" style={{ padding: 24, display: "flex", flexDirection: "column" }}>
             <div style={{ textAlign: "center", marginBottom: 24 }}>
               <div style={{
-                width: 72, height: 72, margin: "0 auto", borderRadius: "50%",
+                width: 80, height: 80, margin: "0 auto", borderRadius: "50%",
                 background: `hsl(${(selectedCustomer.full_name?.charCodeAt(0) || 0) * 5},60%,50%)`,
-                color: "white", fontSize: 28, fontWeight: 700,
+                color: "white", fontSize: 32, fontWeight: 700,
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
                 {selectedCustomer.full_name?.[0]?.toUpperCase() || "?"}
               </div>
-              <div style={{ fontSize: 17, fontWeight: 700, color: "var(--txt1)", marginTop: 14 }}>{selectedCustomer.full_name}</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: "var(--txt1)", marginTop: 16 }}>
+                {selectedCustomer.full_name}
+              </div>
               <div style={{ fontSize: 12, color: "var(--txt4)" }}>{selectedCustomer.customer_code}</div>
             </div>
 
-            <div style={{ display: "grid", gap: 13, fontSize: 13, flex: 1 }}>
+            <div style={{ display: "grid", gap: 14, fontSize: 13, flex: 1 }}>
               <Row label="📱 Mobile"    value={selectedCustomer.mobile} />
               <Row label="🎂 Age"       value={selectedCustomer.age ? `${selectedCustomer.age} years` : "—"} />
               <Row label="👤 Gender"    value={selectedCustomer.gender || "—"} />
-              <Row label="🏙️ City"     value={selectedCustomer.city || "—"} />
+              <Row label="🏙️ City"      value={selectedCustomer.city || "—"} />
               <Row label="🏥 Condition" value={selectedCustomer.medical_condition || "—"} />
-              {selectedCustomer.address && <Row label="📍 Address" value={selectedCustomer.address} />}
+              <Row label="🩺 Doctor"    value={selectedCustomer.doctor_name || "—"} />
+              <Row label="📍 Address"   value={selectedCustomer.address || "—"} />
+              {selectedCustomer.notes && (
+                <div style={{ paddingTop: 8, borderTop: "1px solid var(--border)" }}>
+                  <div style={{ color: "var(--txt3)", fontSize: 11, marginBottom: 4 }}>📝 Notes</div>
+                  <div style={{ color: "var(--txt1)", fontSize: 12.5, lineHeight: 1.5 }}>{selectedCustomer.notes}</div>
+                </div>
+              )}
             </div>
 
-            {/* ✅ Edit button is now functional — opens pre-filled form */}
+            {/* ✅ NOW FUNCTIONAL */}
             <button
-              onClick={openEdit}
+              onClick={openEditCustomer}
               style={{
                 width: "100%", marginTop: 24, padding: "12px 16px",
                 background: "var(--primary)", color: "white", border: "none",
@@ -256,58 +183,68 @@ export default function CustomersPage() {
             </button>
           </div>
 
-          {/* RIGHT: Medicines + Purchases — consistent gap, same padding rhythm */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          {/* ───── RIGHT: Medicines + Purchases ───── */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, minWidth: 0 }}>
 
+            {/* Active Medicines */}
             <div className="card" style={{ padding: 24 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                 <div style={{ fontSize: 15, fontWeight: 700, color: "var(--txt1)" }}>💊 Active Medicines</div>
-                <button className="btn-primary" style={{ fontSize: 12, padding: "8px 14px" }}
-                  onClick={() => { setEditingMed(null); setShowMedModal(true); }}>
+                <button
+                  className="btn-primary"
+                  style={{ fontSize: 12, padding: "8px 14px" }}
+                  onClick={() => { setEditingMed(null); setShowMedModal(true); }}
+                >
                   + Add Medicine
                 </button>
               </div>
 
-              {(selectedCustomer.medicines || []).length === 0 ? (
-                <EmptyRow text="No medicines tracked yet. Add one to enable refill reminders!" />
+              {medicines.length === 0 ? (
+                <div style={{ textAlign: "center", padding: 24, color: "var(--txt4)", fontSize: 13 }}>
+                  No medicines tracked yet. Add one to enable refill reminders!
+                </div>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {selectedCustomer.medicines.map(med => {
+                /* ✅ Equal-height responsive grid instead of stacked blocks of uneven height */
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 10 }}>
+                  {medicines.map(med => {
                     const daysLeft = med.days_left;
                     const urgent   = daysLeft !== null && daysLeft <= 5 && daysLeft >= 0;
                     const overdue  = daysLeft !== null && daysLeft < 0;
                     return (
-                      <div key={med.id} style={{
-                        display: "flex", justifyContent: "space-between", alignItems: "center",
-                        padding: "12px 14px", borderRadius: 10,
-                        background: overdue ? "rgba(220,38,38,0.1)" : urgent ? "rgba(245,158,11,0.1)" : "var(--bg3)",
-                        border: `1px solid ${overdue ? "#fca5a5" : urgent ? "#fde68a" : "var(--border)"}`,
-                      }}>
+                      <div
+                        key={med.id}
+                        style={{
+                          display: "flex", flexDirection: "column", justifyContent: "space-between",
+                          padding: "14px", borderRadius: 10, minHeight: 96,
+                          background: overdue ? "rgba(220,38,38,0.10)" : urgent ? "rgba(245,158,11,0.10)" : "var(--bg3)",
+                          border: `1px solid ${overdue ? "#fca5a5" : urgent ? "#fde68a" : "var(--border)"}`,
+                        }}
+                      >
                         <div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: "var(--txt1)" }}>{med.medicine_name}</div>
-                          <div style={{ fontSize: 11, color: "var(--txt4)" }}>
-                            {med.dose || "—"} · Started {new Date(med.start_date).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--txt1)", lineHeight: 1.3 }}>
+                              {med.medicine_name}
+                            </div>
+                            <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                              <IconBtn onClick={() => { setEditingMed(med); setShowMedModal(true); }} color="var(--primary)" bg="rgba(37,99,235,0.15)">✏️</IconBtn>
+                              <IconBtn onClick={() => removeMedicine(med.id)} color="#ef4444" bg="rgba(239,68,68,0.15)">🗑</IconBtn>
+                            </div>
                           </div>
-                          <div style={{
-                            fontSize: 11, fontWeight: 700, marginTop: 4,
-                            color: overdue ? "#dc2626" : urgent ? "#d97706" : "var(--txt3)",
-                          }}>
-                            {overdue
-                              ? `⚠️ Refill overdue by ${Math.abs(daysLeft)} days`
-                              : urgent
-                              ? `🔔 Refill due in ${daysLeft} days`
-                              : `Refill: ${new Date(med.refill_date).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}`}
+                          <div style={{ fontSize: 11, color: "var(--txt4)", marginTop: 4 }}>
+                            {med.dose || "No dose set"} · Started {new Date(med.start_date).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}
                           </div>
                         </div>
-                        <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                          <button onClick={() => { setEditingMed(med); setShowMedModal(true); }}
-                            style={{ padding: "6px 10px", background: "rgba(37,99,235,0.15)", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 12, color: "var(--primary)" }}>
-                            ✏️
-                          </button>
-                          <button onClick={() => removeMedicine(med.id)}
-                            style={{ padding: "6px 10px", background: "rgba(239,68,68,0.15)", border: "none", borderRadius: 8, cursor: "pointer", fontSize: 12, color: "#ef4444" }}>
-                            🗑
-                          </button>
+                        <div style={{
+                          fontSize: 11, fontWeight: 700, marginTop: 8,
+                          color: overdue ? "#dc2626" : urgent ? "#d97706" : "var(--txt3)",
+                        }}>
+                          {overdue
+                            ? `⚠️ Refill overdue by ${Math.abs(daysLeft)}d`
+                            : urgent
+                            ? `🔔 Refill due in ${daysLeft}d`
+                            : daysLeft === 0
+                            ? `🔔 Refill due today`
+                            : `Refill: ${new Date(med.refill_date).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}`}
                         </div>
                       </div>
                     );
@@ -316,26 +253,21 @@ export default function CustomersPage() {
               )}
             </div>
 
+            {/* Purchase History */}
             <div className="card" style={{ padding: 24 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--txt1)", marginBottom: 18 }}>🧾 Purchase History</div>
-              {(selectedCustomer.purchases || []).length === 0 ? (
-                <EmptyRow text="No purchases yet" />
+              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--txt1)", marginBottom: 16 }}>🧾 Purchase History</div>
+              {purchases.length === 0 ? (
+                <div style={{ textAlign: "center", padding: 24, color: "var(--txt4)", fontSize: 13 }}>No purchases yet</div>
               ) : (
-                <div>
-                  {selectedCustomer.purchases.map((p, i) => (
-                    <div key={p.id} style={{
-                      display: "flex", justifyContent: "space-between", alignItems: "center",
-                      padding: "12px 0",
-                      borderBottom: i < selectedCustomer.purchases.length - 1 ? "1px solid var(--border2)" : "none",
-                    }}>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--primary)" }}>{p.invoice_number}</div>
-                        <div style={{ fontSize: 11, color: "var(--txt4)" }}>{new Date(p.purchase_date).toLocaleDateString("en-IN")}</div>
-                      </div>
-                      <div style={{ fontWeight: 700, color: "var(--txt1)" }}>₹{parseFloat(p.total_amount).toFixed(2)}</div>
+                purchases.map(p => (
+                  <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--border2)" }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--primary)" }}>{p.invoice_number}</div>
+                      <div style={{ fontSize: 11, color: "var(--txt4)" }}>{new Date(p.purchase_date).toLocaleDateString("en-IN")}</div>
                     </div>
-                  ))}
-                </div>
+                    <div style={{ fontWeight: 700, color: "var(--txt1)" }}>₹{parseFloat(p.total_amount).toFixed(2)}</div>
+                  </div>
+                ))
               )}
             </div>
           </div>
@@ -349,86 +281,99 @@ export default function CustomersPage() {
             onClose={() => { setShowMedModal(false); setEditingMed(null); }}
           />
         )}
+
+        {showCustModal && (
+          <CustomerFormModal
+            form={custForm}
+            setField={setField}
+            isEditing={isEditingCust}
+            saving={custSaving}
+            error={custError}
+            onSave={saveCustomer}
+            onClose={() => setShowCustModal(false)}
+          />
+        )}
       </div>
     );
   }
 
-  // ════════════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════════════════
   // LIST VIEW
-  // ════════════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════════════════
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <div style={{ fontSize: 20, fontWeight: 700, color: "var(--txt1)" }}>Customers</div>
-        <button className="btn-primary" onClick={openAdd}>+ Add Customer</button>
+        <button className="btn-primary" onClick={openAddCustomer}>+ Add Customer</button>
       </div>
 
       <div className="card" style={{ overflow: "hidden" }}>
         <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--border)", fontSize: 13, color: "var(--txt4)" }}>
           {customers.length} customers
         </div>
-        <table className="data-table">
-          <thead>
-            <tr>
-              {["Customer", "Mobile", "Age", "Condition", "City", "Medicines", "Refill", "Spend", "Actions"].map(h => <th key={h}>{h}</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            {customers.map(c => {
-              const earliestRefill = c.earliest_refill ? new Date(c.earliest_refill) : null;
-              const daysLeft = earliestRefill ? Math.ceil((earliestRefill - new Date()) / 86400000) : null;
-              return (
-                <tr key={c.id}>
-                  <td>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => fetchCustomerDetail(c.id)}>
-                      <div className="ring" style={{ width: 32, height: 32, background: `hsl(${(c.full_name?.charCodeAt(0)||0)*5},60%,50%)`, color: "white", fontWeight: 700, fontSize: 13, flexShrink: 0 }}>
-                        {c.full_name?.[0]?.toUpperCase() || "?"}
+        <div style={{ overflowX: "auto" }}>
+          <table className="data-table" style={{ width: "100%" }}>
+            <thead>
+              <tr>
+                {["Customer", "Mobile", "Age", "Condition", "City", "Medicines", "Refill", "Spend", "Actions"].map(h => (
+                  <th key={h}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {customers.map(c => {
+                const earliestRefill = c.earliest_refill ? new Date(c.earliest_refill) : null;
+                const daysLeft = earliestRefill ? Math.ceil((earliestRefill - new Date()) / 86400000) : null;
+                return (
+                  <tr key={c.id}>
+                    <td>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => fetchCustomerDetail(c.id)}>
+                        <div className="ring" style={{ width: 32, height: 32, background: `hsl(${(c.full_name?.charCodeAt(0) || 0) * 5},60%,50%)`, color: "white", fontWeight: 700, fontSize: 13, flexShrink: 0 }}>
+                          {c.full_name?.[0]?.toUpperCase() || "?"}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--txt1)" }}>{c.full_name}</div>
+                          <div style={{ fontSize: 11, color: "var(--txt4)" }}>{c.customer_code}</div>
+                        </div>
                       </div>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: "var(--txt1)" }}>{c.full_name}</div>
-                        <div style={{ fontSize: 11, color: "var(--txt4)" }}>{c.customer_code}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ color: "var(--txt3)", fontSize: 13 }}>{c.mobile}</td>
-                  <td style={{ color: "var(--txt3)", fontSize: 13 }}>{c.age ? `${c.age}y` : "—"}</td>
-                  <td>
-                    <span className="tag" style={{ background: `${conditionColor[c.medical_condition?.toLowerCase()] || "#64748b"}18`, color: conditionColor[c.medical_condition?.toLowerCase()] || "#64748b" }}>
-                      {c.medical_condition || "—"}
-                    </span>
-                  </td>
-                  <td style={{ color: "var(--txt3)", fontSize: 13 }}>{c.city || "—"}</td>
-                  <td><span style={{ color: "var(--primary)", fontWeight: 700 }}>{c.medicine_count || 0}</span></td>
-                  <td>
-                    {daysLeft !== null ? (
-                      <span style={{ fontSize: 12, fontWeight: 700, color: daysLeft < 0 ? "#dc2626" : daysLeft <= 5 ? "#d97706" : "var(--txt4)" }}>
-                        {daysLeft < 0 ? `${Math.abs(daysLeft)}d overdue` : `${daysLeft}d left`}
+                    </td>
+                    <td style={{ color: "var(--txt3)", fontSize: 13 }}>{c.mobile}</td>
+                    <td style={{ color: "var(--txt3)", fontSize: 13 }}>{c.age ? `${c.age}y` : "—"}</td>
+                    <td>
+                      <span className="tag" style={{
+                        background: `${conditionColor[c.medical_condition?.toLowerCase()] || "#64748b"}18`,
+                        color: conditionColor[c.medical_condition?.toLowerCase()] || "#64748b",
+                      }}>
+                        {c.medical_condition || "—"}
                       </span>
-                    ) : "—"}
-                  </td>
-                  <td style={{ fontWeight: 700, color: "var(--primary)", fontSize: 13 }}>₹{parseFloat(c.total_spend || 0).toLocaleString()}</td>
-                  <td>
-                    <button onClick={() => fetchCustomerDetail(c.id)} style={{ background: "none", border: "none", color: "var(--primary)", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
-                      View
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        {customers.length === 0 && (
-          <div style={{ textAlign: "center", padding: 48 }}>
-            <div style={{ fontSize: 40, marginBottom: 10 }}>👥</div>
-            <div style={{ fontSize: 14, color: "var(--txt4)", marginBottom: 16 }}>No customers yet</div>
-            <button className="btn-primary" onClick={openAdd}>+ Add First Customer</button>
-          </div>
-        )}
+                    </td>
+                    <td style={{ color: "var(--txt3)", fontSize: 13 }}>{c.city || "—"}</td>
+                    <td><span style={{ color: "var(--primary)", fontWeight: 700 }}>{c.medicine_count || 0}</span></td>
+                    <td>
+                      {daysLeft !== null ? (
+                        <span style={{ fontSize: 12, fontWeight: 700, color: daysLeft < 0 ? "#dc2626" : daysLeft <= 5 ? "#d97706" : "var(--txt4)" }}>
+                          {daysLeft < 0 ? `${Math.abs(daysLeft)}d overdue` : `${daysLeft}d left`}
+                        </span>
+                      ) : "—"}
+                    </td>
+                    <td style={{ fontWeight: 700, color: "var(--primary)", fontSize: 13 }}>₹{parseFloat(c.total_spend || 0).toLocaleString()}</td>
+                    <td>
+                      <button onClick={() => fetchCustomerDetail(c.id)} style={{ background: "none", border: "none", color: "var(--primary)", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
 }
 
+// ── Small aligned label/value row ──────────────────────────────────────
 function Row({ label, value }) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
@@ -438,10 +383,114 @@ function Row({ label, value }) {
   );
 }
 
-function Label({ text }) {
-  return <label style={{ fontSize: 12, fontWeight: 700, color: "var(--txt3)", display: "block", marginBottom: 5 }}>{text}</label>;
+// ── Small square icon button (used in medicine cards) ──────────────────
+function IconBtn({ children, onClick, color, bg }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center",
+        background: bg, border: "none", borderRadius: 7, cursor: "pointer", fontSize: 12, color,
+      }}
+    >
+      {children}
+    </button>
+  );
 }
 
-function EmptyRow({ text }) {
-  return <div style={{ textAlign: "center", padding: 24, color: "var(--txt4)", fontSize: 13 }}>{text}</div>;
+// ════════════════════════════════════════════════════════════════════════
+// ✅ NEW: Add/Edit Customer Modal — same form shape for both actions
+// ════════════════════════════════════════════════════════════════════════
+function CustomerFormModal({ form, setField, isEditing, saving, error, onSave, onClose }) {
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div
+        className="card fade-in"
+        style={{ padding: 32, width: "100%", maxWidth: 560, maxHeight: "90vh", overflowY: "auto", background: "var(--bg2)", border: "1px solid var(--border)" }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div style={{ fontSize: 18, fontWeight: 800, color: "var(--txt1)", marginBottom: 20 }}>
+          {isEditing ? "✏️ Edit Customer" : "➕ Add New Customer"}
+        </div>
+
+        {error && (
+          <div style={{
+            padding: "10px 14px", borderRadius: 8, marginBottom: 16, fontSize: 13,
+            background: "rgba(239,68,68,0.1)", color: "#dc2626", border: "1px solid #fca5a5",
+          }}>
+            {error}
+          </div>
+        )}
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <div style={{ gridColumn: "1/-1" }}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: "var(--txt3)", display: "block", marginBottom: 5 }}>
+              Full Name *
+            </label>
+            <input className="input" placeholder="e.g. Rajesh Tope" value={form.fullName} onChange={setField("fullName")} />
+          </div>
+
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 700, color: "var(--txt3)", display: "block", marginBottom: 5 }}>
+              Mobile Number *
+            </label>
+            <input className="input" type="tel" placeholder="10-digit mobile" value={form.mobile} onChange={setField("mobile")} />
+          </div>
+
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 700, color: "var(--txt3)", display: "block", marginBottom: 5 }}>
+              Age
+            </label>
+            <input className="input" type="number" placeholder="e.g. 45" value={form.age} onChange={setField("age")} />
+          </div>
+
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 700, color: "var(--txt3)", display: "block", marginBottom: 5 }}>
+              Gender
+            </label>
+            <select className="input" value={form.gender} onChange={setField("gender")} style={{ background: "var(--input-bg, var(--bg2))", color: "var(--txt1)" }}>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 700, color: "var(--txt3)", display: "block", marginBottom: 5 }}>
+              City
+            </label>
+            <input className="input" placeholder="e.g. CSN" value={form.city} onChange={setField("city")} />
+          </div>
+
+          <div style={{ gridColumn: "1/-1" }}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: "var(--txt3)", display: "block", marginBottom: 5 }}>
+              Address
+            </label>
+            <input className="input" placeholder="e.g. Bhimnagar, Bhausingpura" value={form.address} onChange={setField("address")} />
+          </div>
+
+          <div style={{ gridColumn: "1/-1" }}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: "var(--txt3)", display: "block", marginBottom: 5 }}>
+              Medical Condition
+            </label>
+            <input className="input" placeholder="e.g. Diabetes, Hypertension" value={form.medicalCondition} onChange={setField("medicalCondition")} />
+          </div>
+
+          <div style={{ gridColumn: "1/-1" }}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: "var(--txt3)", display: "block", marginBottom: 5 }}>
+              Notes (optional)
+            </label>
+            <textarea className="input" rows={2} placeholder="Any additional notes..." value={form.notes} onChange={setField("notes")} style={{ resize: "none" }} />
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+          <button className="btn-primary" style={{ flex: 1 }} onClick={onSave} disabled={saving}>
+            {saving ? "Saving..." : isEditing ? "Save Changes" : "Add Customer"}
+          </button>
+          <button className="btn-secondary" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
 }
