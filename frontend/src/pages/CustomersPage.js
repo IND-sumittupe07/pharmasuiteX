@@ -436,3 +436,115 @@ function Field({ label, required, full, children }) {
   return (
     <div style={{ gridColumn: full ? "1 / -1" : "auto" }}>
       <label style={{ fontSize: 12, fontWeight: 700, color: "var(--txt3)", display: "block", marginBottom: 5 }}>
+        {label}{required && " *"}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// Add/Edit Customer Modal — same form shape for both actions
+// ════════════════════════════════════════════════════════════════════════
+function CustomerFormModal({ form, setField, isEditing, saving, error, onSave, onClose }) {
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div
+        className="card fade-in"
+        style={{ padding: 32, width: "100%", maxWidth: 560, maxHeight: "90vh", overflowY: "auto", background: "var(--bg2)", border: "1px solid var(--border)" }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div style={{ fontSize: 18, fontWeight: 800, color: "var(--txt1)", marginBottom: 20 }}>
+          {isEditing ? "✏️ Edit Customer" : "➕ Add New Customer"}
+        </div>
+
+        {error && (
+          <div style={{
+            padding: "10px 14px", borderRadius: 8, marginBottom: 16, fontSize: 13,
+            background: "rgba(239,68,68,0.1)", color: "#dc2626", border: "1px solid #fca5a5",
+          }}>
+            {error}
+          </div>
+        )}
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, alignItems: "start" }}>
+          <Field label="Full Name" required full>
+            <input className="input" placeholder="e.g. Rajesh Tope" value={form.fullName} onChange={setField("fullName")} />
+          </Field>
+
+          <Field label="Mobile Number" required>
+            <input className="input" placeholder="e.g. 9876543210" value={form.mobile} onChange={setField("mobile")} />
+          </Field>
+
+          <Field label="Age">
+            <input className="input" type="number" min="0" placeholder="e.g. 45" value={form.age} onChange={setField("age")} />
+          </Field>
+
+          <Field label="Gender">
+            <select className="input" value={form.gender} onChange={setField("gender")}>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </Field>
+
+          <Field label="City">
+            <input className="input" placeholder="e.g. Mumbai" value={form.city} onChange={setField("city")} />
+          </Field>
+
+          <Field label="Medical Condition" full>
+            <input className="input" placeholder="e.g. Diabetes" value={form.medicalCondition} onChange={setField("medicalCondition")} />
+          </Field>
+
+          <Field label="Address" full>
+            <textarea
+              className="input"
+              rows={2}
+              placeholder="Street, area, landmark"
+              value={form.address}
+              onChange={setField("address")}
+              style={{ resize: "vertical", minHeight: 60 }}
+            />
+          </Field>
+
+          <Field label="Notes" full>
+            <textarea
+              className="input"
+              rows={3}
+              placeholder="Any additional notes"
+              value={form.notes}
+              onChange={setField("notes")}
+              style={{ resize: "vertical", minHeight: 80 }}
+            />
+          </Field>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--border)" }}>
+          <button
+            onClick={onClose}
+            disabled={saving}
+            style={{
+              padding: "10px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600,
+              background: "var(--bg3)", color: "var(--txt2)", border: "1px solid var(--border)",
+              cursor: saving ? "not-allowed" : "pointer",
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onSave}
+            disabled={saving}
+            style={{
+              padding: "10px 18px", borderRadius: 8, fontSize: 13, fontWeight: 700,
+              background: "var(--primary)", color: "white", border: "none",
+              cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1,
+              minWidth: 120, textAlign: "center",
+            }}
+          >
+            {saving ? "Saving…" : isEditing ? "Save Changes" : "Add Customer"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
