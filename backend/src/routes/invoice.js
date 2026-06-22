@@ -14,7 +14,7 @@ const generateInvoiceNumber = async (pharmacyId) => {
   return `INV-${yr}${mo}-${String(count).padStart(4, "0")}`;
 };
 
-// ✅ Helper: format date properly
+// Helper: format date properly
 const formatDate = (dateVal) => {
   const d = new Date(dateVal);
   const dd = String(d.getDate()).padStart(2, "0");
@@ -44,7 +44,6 @@ router.post("/create", async (req, res) => {
       const price     = parseFloat(item.unitPrice) || 0;
       const itemTotal = qty * price;
 
-      // ✅ Only calculate GST if isGstInvoice is true
       const gstPct    = isGstInvoice ? (parseFloat(item.gstPercent) || 0) : 0;
       const gstAmount = gstPct > 0
         ? (itemTotal * gstPct) / (100 + gstPct)
@@ -134,7 +133,8 @@ router.get("/", async (req, res) => {
     let sql = `
       SELECT p.id, p.invoice_number, p.total_amount, p.gst_amount,
              p.discount_amount, p.payment_mode, p.purchase_date,
-             p.is_gst_invoice, c.full_name, c.mobile
+             p.is_gst_invoice, p.customer_id, p.items,
+             c.full_name, c.mobile
       FROM purchases p
       JOIN customers c ON c.id = p.customer_id
       WHERE p.pharmacy_id = $1
@@ -158,7 +158,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET /api/invoice/:id/pdf — ✅ FIXED: Correct date + GST logic
+// GET /api/invoice/:id/pdf
 router.get("/:id/pdf", async (req, res) => {
   const { pharmacyId } = req.user;
   try {
@@ -185,9 +185,7 @@ router.get("/:id/pdf", async (req, res) => {
       ? JSON.parse(inv.items)
       : inv.items;
 
-    // ✅ FIXED: Use actual purchase_date stored in DB
     const invoiceDate = formatDate(inv.purchase_date);
-
     const isGst = inv.is_gst_invoice === true || inv.is_gst_invoice === "true";
 
     const PDFDocument = require("pdfkit");
@@ -200,7 +198,6 @@ router.get("/:id/pdf", async (req, res) => {
     );
     doc.pipe(res);
 
-    // ─── HEADER ──────────────────────────────────────────────
     doc.fontSize(20).font("Helvetica-Bold").fillColor("#1e293b")
        .text(inv.pharmacy_name || "PharmaSuiteX", 40, 40);
 
@@ -212,7 +209,6 @@ router.get("/:id/pdf", async (req, res) => {
        )
        .text(`Mobile: ${inv.pharmacy_mobile || ""}`, 40, 91);
 
-    // ✅ FIXED: Label shows TAX INVOICE or CASH MEMO correctly
     doc.fontSize(14).font("Helvetica-Bold")
        .fillColor(isGst ? "#2563eb" : "#475569")
        .text(
@@ -222,14 +218,12 @@ router.get("/:id/pdf", async (req, res) => {
 
     doc.fontSize(9).font("Helvetica").fillColor("#666")
        .text(`Invoice: ${inv.invoice_number}`, 350, 60, { align: "right", width: 200 })
-       // ✅ FIXED: Real date from DB, not today's date
        .text(`Date: ${invoiceDate}`, 350, 73, { align: "right", width: 200 })
        .text(`Payment: ${(inv.payment_mode || "cash").toUpperCase()}`, 350, 86, { align: "right", width: 200 });
 
     doc.moveTo(40, 110).lineTo(555, 110)
        .strokeColor("#2563eb").lineWidth(2).stroke();
 
-    // ─── BILL TO ─────────────────────────────────────────────
     doc.fontSize(9).font("Helvetica-Bold").fillColor("#1e293b")
        .text("BILL TO:", 40, 122);
     doc.fontSize(10).font("Helvetica-Bold")
@@ -240,7 +234,6 @@ router.get("/:id/pdf", async (req, res) => {
       doc.text(`Doctor: Dr. ${inv.doctor_name}`, 40, 161);
     }
 
-    // ─── ITEMS TABLE ─────────────────────────────────────────
     const tableTop = 185;
     doc.rect(40, tableTop, 515, 20).fill("#2563eb");
     doc.fontSize(8).font("Helvetica-Bold").fillColor("white")
@@ -262,9 +255,7 @@ router.get("/:id/pdf", async (req, res) => {
          .text(item.hsnCode || "3004",                    270, y)
          .text(String(item.quantity || 1),                315, y)
          .text(`\u20B9${parseFloat(item.unitPrice || 0).toFixed(2)}`, 340, y)
-         // ✅ FIXED: Show 0% when Cash Memo
          .text(`${isGst ? (item.gstPercent || 0) : 0}%`,  393, y)
-         // ✅ FIXED: Show ₹0.00 GST when Cash Memo
          .text(`\u20B9${isGst ? parseFloat(item.gstAmount || 0).toFixed(2) : "0.00"}`, 428, y)
          .text(`\u20B9${parseFloat(item.itemTotal || 0).toFixed(2)}`, 485, y);
       y += 18;
@@ -280,13 +271,11 @@ router.get("/:id/pdf", async (req, res) => {
     const sgst     = parseFloat(inv.sgst_amount || 0);
     const disc     = parseFloat(inv.discount_amount || 0);
 
-    // Subtotal row (always show)
     doc.fontSize(9).font("Helvetica").fillColor("#64748b")
        .text("Subtotal (excl. GST)", 350, y)
        .text(`\u20B9${subtotal.toFixed(2)}`, 490, y, { align: "right", width: 60 });
     y += 15;
 
-    // ✅ FIXED: Only show CGST/SGST when is_gst_invoice = true
     if (isGst && cgst > 0) {
       const gstPct = items[0]?.gstPercent || 12;
       const halfPct = gstPct / 2;
@@ -299,13 +288,11 @@ router.get("/:id/pdf", async (req, res) => {
          .text(`\u20B9${sgst.toFixed(2)}`, 490, y, { align: "right", width: 60 });
       y += 15;
     } else if (!isGst) {
-      // ✅ Show "No GST" note on Cash Memo
       doc.fontSize(9).font("Helvetica").fillColor("#d97706")
          .text("No GST Applied (Cash Memo)", 350, y);
       y += 15;
     }
 
-    // Discount row (only if discount > 0)
     if (disc > 0) {
       doc.fontSize(9).font("Helvetica").fillColor("#ef4444")
          .text("Discount", 350, y)
@@ -313,7 +300,6 @@ router.get("/:id/pdf", async (req, res) => {
       y += 15;
     }
 
-    // Total
     doc.moveTo(350, y).lineTo(555, y)
        .strokeColor("#2563eb").lineWidth(1.5).stroke();
     y += 6;
@@ -324,7 +310,6 @@ router.get("/:id/pdf", async (req, res) => {
          490, y, { align: "right", width: 60 }
        );
 
-    // Footer
     doc.fontSize(8).font("Helvetica").fillColor("#94a3b8")
        .text("Thank you for your purchase! \uD83D\uDC8A", 40, 760,
              { align: "center", width: 515 })
