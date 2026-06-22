@@ -20,7 +20,7 @@ export default function CustomersPage() {
   const [showMedModal, setShowMedModal] = useState(false);
   const [editingMed, setEditingMed]     = useState(null);
 
-  // customer add/edit modal state
+  // ✅ NEW: customer add/edit modal state
   const [showCustModal, setShowCustModal] = useState(false);
   const [custForm, setCustForm]           = useState(emptyForm);
   const [custSaving, setCustSaving]       = useState(false);
@@ -69,7 +69,7 @@ export default function CustomersPage() {
     setShowCustModal(true);
   };
 
-  // "Edit Customer" — opens same form, prefilled
+  // ✅ "Edit Customer" button now actually works — opens same form, prefilled
   const openEditCustomer = () => {
     setCustForm({
       fullName:         selectedCustomer.full_name || "",
@@ -128,13 +128,13 @@ export default function CustomersPage() {
           style={{
             background: "none", border: "none", cursor: "pointer",
             color: "var(--primary)", fontWeight: 600, marginBottom: 16, fontSize: 14,
-            display: "flex", alignItems: "center", gap: 6, padding: 0,
+            display: "flex", alignItems: "center", gap: 6,
           }}
         >
           ← Back to Customers
         </button>
 
-        {/* Aligned 2-column grid: fixed-width profile card + flexible right column */}
+        {/* ✅ Aligned 2-column grid: fixed-width profile card + flexible right column */}
         <div style={{ display: "grid", gridTemplateColumns: "340px 1fr", gap: 24, alignItems: "start" }}>
 
           {/* ───── LEFT: Profile card ───── */}
@@ -170,6 +170,7 @@ export default function CustomersPage() {
               )}
             </div>
 
+            {/* ✅ NOW FUNCTIONAL */}
             <button
               onClick={openEditCustomer}
               style={{
@@ -203,7 +204,7 @@ export default function CustomersPage() {
                   No medicines tracked yet. Add one to enable refill reminders!
                 </div>
               ) : (
-                /* Equal-height responsive grid instead of stacked blocks of uneven height */
+                /* ✅ Equal-height responsive grid instead of stacked blocks of uneven height */
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 10 }}>
                   {medicines.map(med => {
                     const daysLeft = med.days_left;
@@ -296,7 +297,7 @@ export default function CustomersPage() {
     );
   }
 
-  // ════════════════════════════════════════════════════════════════════
+ // ════════════════════════════════════════════════════════════════════
   // LIST VIEW
   // ════════════════════════════════════════════════════════════════════
   return (
