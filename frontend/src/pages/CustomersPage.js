@@ -20,7 +20,7 @@ export default function CustomersPage() {
   const [showMedModal, setShowMedModal] = useState(false);
   const [editingMed, setEditingMed]     = useState(null);
 
-  // ✅ NEW: customer add/edit modal state
+  // customer add/edit modal state
   const [showCustModal, setShowCustModal] = useState(false);
   const [custForm, setCustForm]           = useState(emptyForm);
   const [custSaving, setCustSaving]       = useState(false);
@@ -69,7 +69,7 @@ export default function CustomersPage() {
     setShowCustModal(true);
   };
 
-  // ✅ "Edit Customer" button now actually works — opens same form, prefilled
+  // "Edit Customer" — opens same form, prefilled
   const openEditCustomer = () => {
     setCustForm({
       fullName:         selectedCustomer.full_name || "",
@@ -128,13 +128,13 @@ export default function CustomersPage() {
           style={{
             background: "none", border: "none", cursor: "pointer",
             color: "var(--primary)", fontWeight: 600, marginBottom: 16, fontSize: 14,
-            display: "flex", alignItems: "center", gap: 6,
+            display: "flex", alignItems: "center", gap: 6, padding: 0,
           }}
         >
           ← Back to Customers
         </button>
 
-        {/* ✅ Aligned 2-column grid: fixed-width profile card + flexible right column */}
+        {/* Aligned 2-column grid: fixed-width profile card + flexible right column */}
         <div style={{ display: "grid", gridTemplateColumns: "340px 1fr", gap: 24, alignItems: "start" }}>
 
           {/* ───── LEFT: Profile card ───── */}
@@ -170,7 +170,6 @@ export default function CustomersPage() {
               )}
             </div>
 
-            {/* ✅ NOW FUNCTIONAL */}
             <button
               onClick={openEditCustomer}
               style={{
@@ -204,7 +203,7 @@ export default function CustomersPage() {
                   No medicines tracked yet. Add one to enable refill reminders!
                 </div>
               ) : (
-                /* ✅ Equal-height responsive grid instead of stacked blocks of uneven height */
+                /* Equal-height responsive grid instead of stacked blocks of uneven height */
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 10 }}>
                   {medicines.map(med => {
                     const daysLeft = med.days_left;
@@ -312,11 +311,22 @@ export default function CustomersPage() {
           {customers.length} customers
         </div>
         <div style={{ overflowX: "auto" }}>
-          <table className="data-table" style={{ width: "100%" }}>
+          <table className="data-table" style={{ width: "100%", minWidth: 980, borderCollapse: "collapse" }}>
+            <colgroup>
+              <col style={{ width: 220 }} />
+              <col style={{ width: 130 }} />
+              <col style={{ width: 70 }} />
+              <col style={{ width: 130 }} />
+              <col style={{ width: 100 }} />
+              <col style={{ width: 100 }} />
+              <col style={{ width: 130 }} />
+              <col style={{ width: 100 }} />
+              <col style={{ width: 80 }} />
+            </colgroup>
             <thead>
               <tr>
                 {["Customer", "Mobile", "Age", "Condition", "City", "Medicines", "Refill", "Spend", "Actions"].map(h => (
-                  <th key={h}>{h}</th>
+                  <th key={h} style={cellStyle({ header: true })}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -326,39 +336,45 @@ export default function CustomersPage() {
                 const daysLeft = earliestRefill ? Math.ceil((earliestRefill - new Date()) / 86400000) : null;
                 return (
                   <tr key={c.id}>
-                    <td>
+                    <td style={cellStyle()}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => fetchCustomerDetail(c.id)}>
-                        <div className="ring" style={{ width: 32, height: 32, background: `hsl(${(c.full_name?.charCodeAt(0) || 0) * 5},60%,50%)`, color: "white", fontWeight: 700, fontSize: 13, flexShrink: 0 }}>
+                        <div className="ring" style={{
+                          width: 32, height: 32, borderRadius: "50%", flexShrink: 0,
+                          background: `hsl(${(c.full_name?.charCodeAt(0) || 0) * 5},60%,50%)`,
+                          color: "white", fontWeight: 700, fontSize: 13,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                        }}>
                           {c.full_name?.[0]?.toUpperCase() || "?"}
                         </div>
-                        <div>
-                          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--txt1)" }}>{c.full_name}</div>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--txt1)", whiteSpace: "nowrap" }}>{c.full_name}</div>
                           <div style={{ fontSize: 11, color: "var(--txt4)" }}>{c.customer_code}</div>
                         </div>
                       </div>
                     </td>
-                    <td style={{ color: "var(--txt3)", fontSize: 13 }}>{c.mobile}</td>
-                    <td style={{ color: "var(--txt3)", fontSize: 13 }}>{c.age ? `${c.age}y` : "—"}</td>
-                    <td>
+                    <td style={cellStyle({ color: "var(--txt3)" })}>{c.mobile}</td>
+                    <td style={cellStyle({ color: "var(--txt3)" })}>{c.age ? `${c.age}y` : "—"}</td>
+                    <td style={cellStyle()}>
                       <span className="tag" style={{
+                        display: "inline-block",
                         background: `${conditionColor[c.medical_condition?.toLowerCase()] || "#64748b"}18`,
                         color: conditionColor[c.medical_condition?.toLowerCase()] || "#64748b",
                       }}>
                         {c.medical_condition || "—"}
                       </span>
                     </td>
-                    <td style={{ color: "var(--txt3)", fontSize: 13 }}>{c.city || "—"}</td>
-                    <td><span style={{ color: "var(--primary)", fontWeight: 700 }}>{c.medicine_count || 0}</span></td>
-                    <td>
+                    <td style={cellStyle({ color: "var(--txt3)" })}>{c.city || "—"}</td>
+                    <td style={cellStyle()}><span style={{ color: "var(--primary)", fontWeight: 700 }}>{c.medicine_count || 0}</span></td>
+                    <td style={cellStyle()}>
                       {daysLeft !== null ? (
                         <span style={{ fontSize: 12, fontWeight: 700, color: daysLeft < 0 ? "#dc2626" : daysLeft <= 5 ? "#d97706" : "var(--txt4)" }}>
                           {daysLeft < 0 ? `${Math.abs(daysLeft)}d overdue` : `${daysLeft}d left`}
                         </span>
                       ) : "—"}
                     </td>
-                    <td style={{ fontWeight: 700, color: "var(--primary)", fontSize: 13 }}>₹{parseFloat(c.total_spend || 0).toLocaleString()}</td>
-                    <td>
-                      <button onClick={() => fetchCustomerDetail(c.id)} style={{ background: "none", border: "none", color: "var(--primary)", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
+                    <td style={cellStyle({ fontWeight: 700, color: "var(--primary)" })}>₹{parseFloat(c.total_spend || 0).toLocaleString()}</td>
+                    <td style={cellStyle()}>
+                      <button onClick={() => fetchCustomerDetail(c.id)} style={{ background: "none", border: "none", color: "var(--primary)", cursor: "pointer", fontSize: 13, fontWeight: 600, padding: 0 }}>
                         View
                       </button>
                     </td>
@@ -371,6 +387,23 @@ export default function CustomersPage() {
       </div>
     </div>
   );
+}
+
+// ── Consistent padding/alignment for every table header + cell ─────────
+function cellStyle({ header = false, color, fontWeight } = {}) {
+  return {
+    padding: "12px 16px",
+    textAlign: "left",
+    verticalAlign: "middle",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    fontSize: header ? 12 : 13,
+    fontWeight: header ? 700 : (fontWeight || 400),
+    color: header ? "var(--txt4)" : (color || "var(--txt2)"),
+    textTransform: header ? "uppercase" : "none",
+    letterSpacing: header ? 0.3 : 0,
+  };
 }
 
 // ── Small aligned label/value row ──────────────────────────────────────
@@ -398,8 +431,20 @@ function IconBtn({ children, onClick, color, bg }) {
   );
 }
 
+// ── Reusable form field — keeps label/input spacing identical everywhere ─
+function Field({ label, required, full, children }) {
+  return (
+    <div style={{ gridColumn: full ? "1 / -1" : "auto" }}>
+      <label style={{ fontSize: 12, fontWeight: 700, color: "var(--txt3)", display: "block", marginBottom: 5 }}>
+        {label}{required && " *"}
+      </label>
+      {children}
+    </div>
+  );
+}
+
 // ════════════════════════════════════════════════════════════════════════
-// ✅ NEW: Add/Edit Customer Modal — same form shape for both actions
+// Add/Edit Customer Modal — same form shape for both actions
 // ════════════════════════════════════════════════════════════════════════
 function CustomerFormModal({ form, setField, isEditing, saving, error, onSave, onClose }) {
   return (
@@ -422,73 +467,82 @@ function CustomerFormModal({ form, setField, isEditing, saving, error, onSave, o
           </div>
         )}
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-          <div style={{ gridColumn: "1/-1" }}>
-            <label style={{ fontSize: 12, fontWeight: 700, color: "var(--txt3)", display: "block", marginBottom: 5 }}>
-              Full Name *
-            </label>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, alignItems: "start" }}>
+          <Field label="Full Name" required full>
             <input className="input" placeholder="e.g. Rajesh Tope" value={form.fullName} onChange={setField("fullName")} />
-          </div>
+          </Field>
 
-          <div>
-            <label style={{ fontSize: 12, fontWeight: 700, color: "var(--txt3)", display: "block", marginBottom: 5 }}>
-              Mobile Number *
-            </label>
-            <input className="input" type="tel" placeholder="10-digit mobile" value={form.mobile} onChange={setField("mobile")} />
-          </div>
+          <Field label="Mobile Number" required>
+            <input className="input" placeholder="e.g. 9876543210" value={form.mobile} onChange={setField("mobile")} />
+          </Field>
 
-          <div>
-            <label style={{ fontSize: 12, fontWeight: 700, color: "var(--txt3)", display: "block", marginBottom: 5 }}>
-              Age
-            </label>
-            <input className="input" type="number" placeholder="e.g. 45" value={form.age} onChange={setField("age")} />
-          </div>
+          <Field label="Age">
+            <input className="input" type="number" min="0" placeholder="e.g. 45" value={form.age} onChange={setField("age")} />
+          </Field>
 
-          <div>
-            <label style={{ fontSize: 12, fontWeight: 700, color: "var(--txt3)", display: "block", marginBottom: 5 }}>
-              Gender
-            </label>
-            <select className="input" value={form.gender} onChange={setField("gender")} style={{ background: "var(--input-bg, var(--bg2))", color: "var(--txt1)" }}>
-              <option>Male</option>
-              <option>Female</option>
-              <option>Other</option>
+          <Field label="Gender">
+            <select className="input" value={form.gender} onChange={setField("gender")}>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
             </select>
-          </div>
+          </Field>
 
-          <div>
-            <label style={{ fontSize: 12, fontWeight: 700, color: "var(--txt3)", display: "block", marginBottom: 5 }}>
-              City
-            </label>
-            <input className="input" placeholder="e.g. CSN" value={form.city} onChange={setField("city")} />
-          </div>
+          <Field label="City">
+            <input className="input" placeholder="e.g. Mumbai" value={form.city} onChange={setField("city")} />
+          </Field>
 
-          <div style={{ gridColumn: "1/-1" }}>
-            <label style={{ fontSize: 12, fontWeight: 700, color: "var(--txt3)", display: "block", marginBottom: 5 }}>
-              Address
-            </label>
-            <input className="input" placeholder="e.g. Bhimnagar, Bhausingpura" value={form.address} onChange={setField("address")} />
-          </div>
+          <Field label="Medical Condition" full>
+            <input className="input" placeholder="e.g. Diabetes" value={form.medicalCondition} onChange={setField("medicalCondition")} />
+          </Field>
 
-          <div style={{ gridColumn: "1/-1" }}>
-            <label style={{ fontSize: 12, fontWeight: 700, color: "var(--txt3)", display: "block", marginBottom: 5 }}>
-              Medical Condition
-            </label>
-            <input className="input" placeholder="e.g. Diabetes, Hypertension" value={form.medicalCondition} onChange={setField("medicalCondition")} />
-          </div>
+          <Field label="Address" full>
+            <textarea
+              className="input"
+              rows={2}
+              placeholder="Street, area, landmark"
+              value={form.address}
+              onChange={setField("address")}
+              style={{ resize: "vertical", minHeight: 60 }}
+            />
+          </Field>
 
-          <div style={{ gridColumn: "1/-1" }}>
-            <label style={{ fontSize: 12, fontWeight: 700, color: "var(--txt3)", display: "block", marginBottom: 5 }}>
-              Notes (optional)
-            </label>
-            <textarea className="input" rows={2} placeholder="Any additional notes..." value={form.notes} onChange={setField("notes")} style={{ resize: "none" }} />
-          </div>
+          <Field label="Notes" full>
+            <textarea
+              className="input"
+              rows={3}
+              placeholder="Any additional notes"
+              value={form.notes}
+              onChange={setField("notes")}
+              style={{ resize: "vertical", minHeight: 80 }}
+            />
+          </Field>
         </div>
 
-        <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-          <button className="btn-primary" style={{ flex: 1 }} onClick={onSave} disabled={saving}>
-            {saving ? "Saving..." : isEditing ? "Save Changes" : "Add Customer"}
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--border)" }}>
+          <button
+            onClick={onClose}
+            disabled={saving}
+            style={{
+              padding: "10px 18px", borderRadius: 8, fontSize: 13, fontWeight: 600,
+              background: "var(--bg3)", color: "var(--txt2)", border: "1px solid var(--border)",
+              cursor: saving ? "not-allowed" : "pointer",
+            }}
+          >
+            Cancel
           </button>
-          <button className="btn-secondary" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
+          <button
+            onClick={onSave}
+            disabled={saving}
+            style={{
+              padding: "10px 18px", borderRadius: 8, fontSize: 13, fontWeight: 700,
+              background: "var(--primary)", color: "white", border: "none",
+              cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1,
+              minWidth: 120, textAlign: "center",
+            }}
+          >
+            {saving ? "Saving…" : isEditing ? "Save Changes" : "Add Customer"}
+          </button>
         </div>
       </div>
     </div>
