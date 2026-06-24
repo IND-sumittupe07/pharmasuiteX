@@ -385,6 +385,18 @@ export default function CustomersPage() {
           </table>
         </div>
       </div>
+
+      {showCustModal && (
+        <CustomerFormModal
+          form={custForm}
+          setField={setField}
+          isEditing={isEditingCust}
+          saving={custSaving}
+          error={custError}
+          onSave={saveCustomer}
+          onClose={() => setShowCustModal(false)}
+        />
+      )}
     </div>
   );
 }
