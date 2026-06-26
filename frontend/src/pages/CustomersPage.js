@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import api from "../api/client";
 import AddMedicineModal from "../components/AddMedicineModal";
 
@@ -459,7 +460,7 @@ function Field({ label, required, full, children }) {
 // Add/Edit Customer Modal — same form shape for both actions
 // ════════════════════════════════════════════════════════════════════════
 function CustomerFormModal({ form, setField, isEditing, saving, error, onSave, onClose }) {
-  return (
+  return createPortal(
     <div className="modal-backdrop" onClick={onClose}>
       <div
         className="card fade-in"
@@ -557,6 +558,7 @@ function CustomerFormModal({ form, setField, isEditing, saving, error, onSave, o
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
