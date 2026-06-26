@@ -461,10 +461,22 @@ function Field({ label, required, full, children }) {
 // ════════════════════════════════════════════════════════════════════════
 function CustomerFormModal({ form, setField, isEditing, saving, error, onSave, onClose }) {
   return createPortal(
-    <div className="modal-backdrop" onClick={onClose}>
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+        background: "rgba(0,0,0,0.6)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: 20, overflowY: "auto", zIndex: 2000,
+      }}
+    >
       <div
         className="card fade-in"
-        style={{ padding: 32, width: "100%", maxWidth: 560, maxHeight: "90vh", overflowY: "auto", background: "var(--bg2)", border: "1px solid var(--border)" }}
+        style={{
+          padding: 32, width: "100%", maxWidth: 560, maxHeight: "90vh", overflowY: "auto",
+          background: "var(--bg2)", border: "1px solid var(--border)",
+          margin: "auto", position: "relative",
+        }}
         onClick={e => e.stopPropagation()}
       >
         <div style={{ fontSize: 18, fontWeight: 800, color: "var(--txt1)", marginBottom: 20 }}>
