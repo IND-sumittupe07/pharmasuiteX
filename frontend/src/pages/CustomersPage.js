@@ -87,20 +87,29 @@ export default function CustomersPage() {
     setShowCustModal(true);
   };
 
-  const setField = k => e => setCustForm(f => ({ ...f, [k]: e.target.value }));
+  const setField = k => e => {
+    let val = e.target.value;
+    if (k === "mobile") {
+      val = val.replace(/\D/g, "").slice(0, 10); // digits only, max 10
+    }
+    setCustForm(f => ({ ...f, [k]: val }));
+  };
 
   const saveCustomer = async () => {
     if (!custForm.fullName.trim()) { setCustError("Full name is required"); return; }
-    if (!custForm.mobile.trim())   { setCustError("Mobile number is required"); return; }
+    const cleanMobile = custForm.mobile.replace(/\D/g, "");
+    if (!cleanMobile)                 { setCustError("Mobile number is required"); return; }
+    if (cleanMobile.length !== 10)    { setCustError("Mobile number must be exactly 10 digits"); return; }
 
     setCustSaving(true);
     setCustError("");
+    const payload = { ...custForm, mobile: cleanMobile };
     try {
       if (isEditingCust) {
-        await api.put(`/customers/${selectedCustomer.id}`, custForm);
+        await api.put(`/customers/${selectedCustomer.id}`, payload);
         await fetchCustomerDetail(selectedCustomer.id);
       } else {
-        await api.post("/customers", custForm);
+        await api.post("/customers", payload);
         await fetchCustomers();
       }
       setShowCustModal(false);
@@ -498,7 +507,14 @@ function CustomerFormModal({ form, setField, isEditing, saving, error, onSave, o
           </Field>
 
           <Field label="Mobile Number" required>
-            <input className="input" placeholder="e.g. 9876543210" value={form.mobile} onChange={setField("mobile")} />
+            <input
+              className="input"
+              placeholder="e.g. 9876543210"
+              value={form.mobile}
+              onChange={setField("mobile")}
+              inputMode="numeric"
+              maxLength={10}
+            />
           </Field>
 
           <Field label="Age">
